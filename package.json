@@ -1,0 +1,24 @@
+{
+  "name": "name-game",
+  "version": "0.1.0",
+  "description": "The Name Game — athlete chaining party game (NBA/MLB/NFL/NHL), pass-the-phone + online multiplayer.",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build-db": "node scripts/build-db.js",
+    "test": "node test-online.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "compression": "^1.8.1",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.3"
+  }
+}

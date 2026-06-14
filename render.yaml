@@ -1,0 +1,14 @@
+# Render blueprint — deploy with one click from a GitHub repo.
+# https://render.com  ->  New  ->  Blueprint  ->  point at this repo.
+# Render's free web service supports WebSockets (Socket.io) out of the box.
+services:
+  - type: web
+    name: name-game
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+    healthCheckPath: /health
