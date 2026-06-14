@@ -8,7 +8,7 @@
   var O = {
     room: null,
     myId: null,
-    settings: { leagues: ["NBA", "MLB", "NFL", "NHL"], era: "both" },
+    settings: { leagues: ["NBA", "MLB", "NFL", "NHL"], era: "both", timer: 30 },
     tick: null,
   };
   window.NameGameOnline = O;
@@ -148,42 +148,75 @@
     var curPlayer = room.players.find(function (p) { return p.id === room.currentPlayerId; });
     var players = room.players.map(function (p) { return { name: p.name, alive: p.alive }; });
     var curIdx = room.players.findIndex(function (p) { return p.id === room.currentPlayerId; });
+    var secs = room.settings.timer;
+
+    if ((room.paused || room.challenge) && O.tick) { clearInterval(O.tick); O.tick = null; }
+
+    var timerHtml = secs > 0
+      ? '<div class="timer-wrap"><div class="timer-bar"><div class="timer-fill" id="on-timer-fill"></div></div>' +
+        '<div class="timer-num" id="on-timer-num">' + secs + "s</div></div>"
+      : '<div class="no-timer">⏱ No time limit' + (meTurn ? " — tap “Stuck” if you can’t go" : "") + "</div>";
+
+    var middle;
+    if (room.challenge) {
+      middle = App.challengePanel(room.challenge);
+    } else if (room.paused) {
+      middle = '<div class="overlay-panel"><div class="op-title">⏸ Paused</div>' +
+        '<button class="primary-btn" id="on-resume">Resume</button></div>';
+    } else {
+      middle =
+        (meTurn
+          ? '<div class="guess-row"><input type="text" id="on-guess" placeholder="Type an athlete’s name…" autocomplete="off" />' +
+            '<button class="primary-btn" id="on-submit">Go</button></div>'
+          : '<div class="feedback">Waiting for ' + esc(curPlayer ? curPlayer.name : "player") + "…</div>") +
+        '<div class="feedback" id="on-feedback"></div>' +
+        '<div class="ctl-row">' +
+        '<button class="ctl-btn" id="on-pause">⏸ Pause</button>' +
+        '<button class="ctl-btn" id="on-challenge">🚩 Challenge</button>' +
+        (meTurn ? '<button class="ctl-btn danger" id="on-stuck">🏳 Stuck</button>' : "") +
+        "</div>";
+    }
 
     box.innerHTML =
       App.strip(players, curIdx) +
       '<div class="turn-card">' +
-      '<div class="turn-player">' + (meTurn ? "Your turn" : "Now up") + "</div>" +
+      '<div class="turn-player' + (meTurn ? " you" : "") + '">' + (meTurn ? "Your turn" : "Now up") + "</div>" +
       '<div class="turn-name">' + esc(curPlayer ? curPlayer.name : "—") + "</div>" +
       (room.requiredLetter
         ? '<div class="letter-cap">First name must start with</div><div class="letter-badge">' + room.requiredLetter + "</div>"
         : '<div class="letter-cap">Opening turn — name any eligible athlete</div>') +
-      '<div class="timer-wrap"><div class="timer-bar"><div class="timer-fill" id="on-timer-fill"></div></div>' +
-      '<div class="timer-num" id="on-timer-num">30s</div></div>' +
-      (meTurn
-        ? '<div class="guess-row"><input type="text" id="on-guess" placeholder="Type an athlete’s name…" autocomplete="off" />' +
-          '<button class="primary-btn" id="on-submit">Go</button></div>'
-        : '<div class="feedback">Waiting for ' + esc(curPlayer ? curPlayer.name : "player") + "…</div>") +
-      '<div class="feedback" id="on-feedback"></div>' +
+      timerHtml + middle +
       "</div>" +
       App.historyHtml(room.history);
 
-    if (meTurn) {
-      var input = document.getElementById("on-guess");
-      var submit = function () {
-        var fb = document.getElementById("on-feedback");
-        socket.emit("game:guess", { guess: input.value }, function (res) {
-          if (res && !res.ok) {
-            fb.textContent = res.message; fb.className = "feedback bad";
-            if (window.FX) { FX.bad(); FX.shake(document.querySelector("#online-room .turn-card")); }
-          } else if (window.FX) FX.good();
-        });
-      };
-      document.getElementById("on-submit").onclick = submit;
-      input.addEventListener("keydown", function (e) { if (e.key === "Enter") submit(); });
-      input.focus();
+    if (room.challenge) {
+      App.wireChallenge("online-room", function (decision) {
+        socket.emit("game:resolve", { decision: decision });
+      });
+    } else if (room.paused) {
+      document.getElementById("on-resume").onclick = function () { socket.emit("game:resume"); };
+    } else {
+      if (meTurn) {
+        var input = document.getElementById("on-guess");
+        var submit = function () {
+          var fb = document.getElementById("on-feedback");
+          socket.emit("game:guess", { guess: input.value }, function (res) {
+            if (res && !res.ok) {
+              fb.textContent = res.message; fb.className = "feedback bad";
+              if (window.FX) { FX.bad(); FX.shake(document.querySelector("#online-room .turn-card")); }
+            } else if (window.FX) FX.good();
+          });
+        };
+        document.getElementById("on-submit").onclick = submit;
+        input.addEventListener("keydown", function (e) { if (e.key === "Enter") submit(); });
+        input.focus();
+        var sb = document.getElementById("on-stuck");
+        if (sb) sb.onclick = function () { socket.emit("game:giveup"); };
+      }
+      document.getElementById("on-pause").onclick = function () { socket.emit("game:pause"); };
+      document.getElementById("on-challenge").onclick = function () { socket.emit("game:challenge"); };
+      if (secs > 0) startTimer(room.deadlineTs);
     }
-
-    startTimer(room.deadlineTs);
   }
 
   function renderEnded(box, room) {
@@ -211,7 +244,8 @@
       var num = document.getElementById("on-timer-num");
       if (!fill || !deadlineTs) return;
       var left = Math.max(0, Math.ceil((deadlineTs - Date.now()) / 1000));
-      fill.style.width = (left / 30) * 100 + "%";
+      var denom = (O.room && O.room.settings && O.room.settings.timer) || 30;
+      fill.style.width = (left / denom) * 100 + "%";
       fill.classList.toggle("warn", left <= 10);
       num.classList.toggle("warn", left <= 10);
       num.textContent = left + "s";

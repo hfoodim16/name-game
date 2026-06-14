@@ -59,6 +59,9 @@ function publicRoom(room) {
     requiredLetter: room.requiredLetter,
     history: room.history,
     deadlineTs: room.deadlineTs,
+    paused: room.paused,
+    pauseRemaining: room.pauseRemaining,
+    challenge: room.challenge,
     winnerId: room.winnerId,
     lastError: null,
   };
@@ -79,31 +82,69 @@ function clearTimer(room) {
   }
 }
 
+// Un-pause: restore the remaining time (or no timer at all).
+function resumeClock(room) {
+  room.paused = false;
+  room.challenge = null;
+  clearTimer(room);
+  if (room.settings.timer > 0) {
+    const remaining = room.pauseRemaining || room.settings.timer * 1000;
+    room.deadlineTs = Date.now() + remaining;
+    room.timer = setTimeout(() => {
+      eliminate(room, room.order[room.turnIndex], "ran out of time");
+    }, remaining);
+  } else {
+    room.deadlineTs = null;
+  }
+  room.pauseRemaining = 0;
+}
+
+function aliveOrder(room) {
+  return room.order.filter((id) => room.players.find((p) => p.id === id && p.alive));
+}
+
+// Set up the turn for whoever room.turnIndex currently points at (no advance).
+// Used both for a fresh turn and for "redo turn" after a rejected challenge.
+function beginTurnAt(room) {
+  clearTimer(room);
+  if (aliveOrder(room).length <= 1) return endGame(room, aliveOrder(room)[0] || null);
+  // make sure the index lands on an alive player
+  let guard = 0;
+  while (
+    guard++ <= room.order.length &&
+    !room.players.find((p) => p.id === room.order[room.turnIndex] && p.alive)
+  ) {
+    room.turnIndex = (room.turnIndex + 1) % room.order.length;
+  }
+  room.lastRejected = null;
+  room.paused = false;
+  room.challenge = null;
+  room.pauseRemaining = 0;
+  const secs = room.settings.timer;
+  if (secs > 0) {
+    room.deadlineTs = Date.now() + secs * 1000;
+    room.timer = setTimeout(() => {
+      eliminate(room, room.order[room.turnIndex], "ran out of time");
+    }, secs * 1000);
+  } else {
+    room.deadlineTs = null; // no timer
+  }
+  broadcast(room);
+}
+
+// Advance to the next alive player, then begin their turn.
 function startTurn(room) {
   clearTimer(room);
-  const alive = room.order.filter((id) =>
-    room.players.find((p) => p.id === id && p.alive)
-  );
-  if (alive.length <= 1) return endGame(room, alive[0] || null);
-
-  // advance to next alive player
+  if (aliveOrder(room).length <= 1) return endGame(room, aliveOrder(room)[0] || null);
   let guard = 0;
   do {
     room.turnIndex = (room.turnIndex + 1) % room.order.length;
     guard++;
   } while (
     guard <= room.order.length &&
-    !room.players.find(
-      (p) => p.id === room.order[room.turnIndex] && p.alive
-    )
+    !room.players.find((p) => p.id === room.order[room.turnIndex] && p.alive)
   );
-
-  room.deadlineTs = Date.now() + TURN_SECONDS * 1000;
-  broadcast(room);
-  room.timer = setTimeout(() => {
-    const pid = room.order[room.turnIndex];
-    eliminate(room, pid, "ran out of time");
-  }, TURN_SECONDS * 1000);
+  beginTurnAt(room);
 }
 
 function eliminate(room, playerId, reason) {
@@ -137,6 +178,11 @@ function resetRoom(room) {
   room.usedKeys = new Set();
   room.history = [];
   room.deadlineTs = null;
+  room.paused = false;
+  room.pauseRemaining = 0;
+  room.challenge = null;
+  room.turnsStack = [];
+  room.lastRejected = null;
   room.winnerId = null;
 }
 
@@ -158,6 +204,11 @@ io.on("connection", (socket) => {
       usedKeys: new Set(),
       history: [],
       deadlineTs: null,
+      paused: false,
+      pauseRemaining: 0,
+      challenge: null,
+      turnsStack: [],
+      lastRejected: null,
       winnerId: null,
       timer: null,
     };
@@ -205,6 +256,8 @@ io.on("connection", (socket) => {
   socket.on("game:guess", ({ guess }, cb) => {
     const room = rooms.get(joinedCode);
     if (!room || room.status !== "playing") return;
+    if (room.paused || room.challenge)
+      return cb && cb({ ok: false, message: "The game is paused." });
     const currentId = room.order[room.turnIndex];
     if (currentId !== socket.id)
       return cb && cb({ ok: false, message: "It's not your turn." });
@@ -216,11 +269,23 @@ io.on("connection", (socket) => {
       requiredLetter: room.requiredLetter,
     });
 
-    if (!result.ok) return cb && cb({ ok: false, message: result.message });
+    if (!result.ok) {
+      room.lastRejected = { playerId: socket.id, guess: (guess || "").trim() };
+      return cb && cb({ ok: false, message: result.message });
+    }
 
     const p = room.players.find((x) => x.id === socket.id);
     room.usedKeys.add(result.key);
+    room.turnsStack.push({
+      playerId: socket.id,
+      key: result.key,
+      prevRequiredLetter: room.requiredLetter,
+      name: result.athlete.name,
+      league: result.athlete.league,
+      nextLetter: result.nextLetter,
+    });
     room.requiredLetter = result.nextLetter;
+    room.lastRejected = null;
     room.history.push({
       type: "said",
       player: p ? p.name : "?",
@@ -230,6 +295,103 @@ io.on("connection", (socket) => {
     });
     cb && cb({ ok: true, athlete: result.athlete });
     startTurn(room);
+  });
+
+  // --- pause / resume -----------------------------------------------------
+  socket.on("game:pause", () => {
+    const room = rooms.get(joinedCode);
+    if (!room || room.status !== "playing" || room.paused || room.challenge) return;
+    if (!room.players.find((p) => p.id === socket.id)) return;
+    if (room.settings.timer > 0 && room.deadlineTs)
+      room.pauseRemaining = Math.max(0, room.deadlineTs - Date.now());
+    clearTimer(room);
+    room.paused = true;
+    room.deadlineTs = null;
+    broadcast(room);
+  });
+
+  socket.on("game:resume", () => {
+    const room = rooms.get(joinedCode);
+    if (!room || room.status !== "playing" || !room.paused || room.challenge) return;
+    if (!room.players.find((p) => p.id === socket.id)) return;
+    resumeClock(room);
+    broadcast(room);
+  });
+
+  // --- challenge ----------------------------------------------------------
+  socket.on("game:challenge", () => {
+    const room = rooms.get(joinedCode);
+    if (!room || room.status !== "playing" || room.challenge) return;
+    if (!room.players.find((p) => p.id === socket.id)) return;
+    if (room.settings.timer > 0 && room.deadlineTs && !room.paused)
+      room.pauseRemaining = Math.max(0, room.deadlineTs - Date.now());
+    clearTimer(room);
+    room.paused = true;
+    room.deadlineTs = null;
+    if (room.lastRejected) {
+      const rp = room.players.find((p) => p.id === room.lastRejected.playerId);
+      room.challenge = { kind: "rejected", guess: room.lastRejected.guess, player: rp ? rp.name : "?" };
+    } else if (room.turnsStack.length) {
+      const t = room.turnsStack[room.turnsStack.length - 1];
+      const tp = room.players.find((p) => p.id === t.playerId);
+      room.challenge = { kind: "accepted", name: t.name, player: tp ? tp.name : "?" };
+    } else {
+      room.challenge = { kind: "none" };
+    }
+    broadcast(room);
+  });
+
+  socket.on("game:resolve", ({ decision }) => {
+    const room = rooms.get(joinedCode);
+    if (!room || room.status !== "playing" || !room.challenge) return;
+    if (!room.players.find((p) => p.id === socket.id)) return;
+    const ch = room.challenge;
+    room.challenge = null;
+
+    if (ch.kind === "rejected" && decision === "allow" && room.lastRejected) {
+      const guess = room.lastRejected.guess;
+      const key = Rules.normalize(guess);
+      const nextL = Rules.firstLetterOfLastName(guess);
+      const author = room.players.find((p) => p.id === room.lastRejected.playerId);
+      room.usedKeys.add(key);
+      room.turnsStack.push({
+        playerId: room.lastRejected.playerId, key,
+        prevRequiredLetter: room.requiredLetter, name: guess, league: "allowed", nextLetter: nextL,
+      });
+      room.history.push({ type: "said", player: author ? author.name : "?", name: guess, league: "allowed", nextLetter: nextL });
+      room.requiredLetter = nextL;
+      room.lastRejected = null;
+      // the rejected guess was the current player's, so just advance.
+      return startTurn(room);
+    }
+
+    if (ch.kind === "accepted" && decision === "reject" && room.turnsStack.length) {
+      const rec = room.turnsStack.pop();
+      room.usedKeys.delete(rec.key);
+      room.requiredLetter = rec.prevRequiredLetter;
+      for (let i = room.history.length - 1; i >= 0; i--) {
+        if (room.history[i].type === "said" && room.history[i].name === rec.name) {
+          room.history.splice(i, 1);
+          break;
+        }
+      }
+      const idx = room.order.indexOf(rec.playerId);
+      if (idx !== -1) room.turnIndex = idx;
+      return beginTurnAt(room); // that player redoes their turn
+    }
+
+    // "it counts" / "keep rejected" / nothing → just resume the clock
+    resumeClock(room);
+    broadcast(room);
+  });
+
+  // --- give up (concede current turn) ------------------------------------
+  socket.on("game:giveup", () => {
+    const room = rooms.get(joinedCode);
+    if (!room || room.status !== "playing" || room.challenge) return;
+    if (room.order[room.turnIndex] !== socket.id) return; // only the current player
+    room.paused = false;
+    eliminate(room, socket.id, "gave up");
   });
 
   socket.on("game:reset", () => {
@@ -275,7 +437,10 @@ function sanitizeSettings(s) {
     : [];
   if (!leagues.length) leagues = allowed.slice();
   const era = ["current", "past", "both"].indexOf(s.era) !== -1 ? s.era : "both";
-  return { leagues, era };
+  let timer = parseInt(s.timer, 10);
+  if (isNaN(timer)) timer = TURN_SECONDS;
+  timer = Math.max(0, Math.min(300, timer)); // 0 = off, capped at 5 min
+  return { leagues, era, timer };
 }
 function shuffle(arr) {
   const a = arr.slice();

@@ -28,15 +28,20 @@
   /* ------------------------------------------------- shared settings UI */
   var LEAGUES = ["NBA", "MLB", "NFL", "NHL"];
 
-  // Renders league chips + era selector into `el`. Calls onChange(settings).
+  var TIMER_OPTS = [[0, "Off"], [15, "15s"], [30, "30s"], [45, "45s"], [60, "60s"], [90, "90s"]];
+
+  // Renders league chips + era + timer selectors into `el`. Calls onChange(settings).
   // editable=false renders a read-only summary (for non-host players).
   function renderSettings(el, settings, onChange, editable) {
+    if (settings.timer == null) settings.timer = 30;
     if (editable === false) {
       el.innerHTML =
         '<h3>Settings</h3><p class="settings-label">Leagues: <b>' +
         esc(settings.leagues.join(", ")) +
         "</b></p><p class=\"settings-label\">Players: <b>" +
         ({ current: "Current only", past: "Past only", both: "Current + Past" }[settings.era]) +
+        "</b></p><p class=\"settings-label\">Turn timer: <b>" +
+        (settings.timer ? settings.timer + " seconds" : "Off (no limit)") +
         "</b></p>";
       return;
     }
@@ -76,7 +81,27 @@
           );
         })
         .join("") +
+      "</div>" +
+      '<p class="settings-label" style="margin-top:14px">Turn timer ' +
+      '<span style="opacity:.7">(off is great for pass &amp; play)</span></p>' +
+      '<div class="chip-row" data-timer>' +
+      TIMER_OPTS.map(function (o) {
+        return (
+          '<button class="chip ' + (settings.timer === o[0] ? "on" : "") +
+          '" data-timer-val="' + o[0] + '">' + o[1] + "</button>"
+        );
+      }).join("") +
       "</div>";
+
+    el.querySelectorAll("[data-timer-val]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        settings.timer = parseInt(btn.getAttribute("data-timer-val"), 10);
+        el.querySelectorAll("[data-timer-val]").forEach(function (b) {
+          b.classList.toggle("on", b === btn);
+        });
+        onChange && onChange(settings);
+      });
+    });
 
     el.querySelectorAll("[data-league]").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -103,7 +128,7 @@
   /* ============================================== PASS & PLAY ============ */
   var PP = {
     players: ["Player 1", "Player 2"],
-    settings: { leagues: LEAGUES.slice(), era: "both" },
+    settings: { leagues: LEAGUES.slice(), era: "both", timer: 30 },
     state: null,
   };
 
@@ -170,12 +195,17 @@
       requiredLetter: "",
       used: new Set(),
       history: [],
-      winner: null,
+      timerSecs: PP.settings.timer == null ? 30 : PP.settings.timer,
       deadline: 0,
+      remaining: 0,
+      paused: false,
+      challenge: null,
+      turnsStack: [],
+      lastRejected: null,
       tick: null,
     };
     showScreen("passphone-game");
-    nextPPTurn(true);
+    beginTurn();
   }
 
   function alivePP() {
@@ -184,41 +214,138 @@
     });
   }
 
-  function nextPPTurn(first) {
+  function startTick() {
     var s = PP.state;
     if (s.tick) clearInterval(s.tick);
-    if (alivePP().length <= 1) return endPP();
-
-    if (!first) {
-      do {
-        s.turn = (s.turn + 1) % s.players.length;
-      } while (!s.players[s.turn].alive);
-    } else {
-      while (!s.players[s.turn].alive) s.turn = (s.turn + 1) % s.players.length;
-    }
-
-    s.deadline = Date.now() + 30000;
-    renderPPGame();
-    var input = document.getElementById("pp-guess");
-    if (input) input.focus();
     s.tick = setInterval(function () {
+      if (s.paused) return;
       var left = Math.max(0, Math.ceil((s.deadline - Date.now()) / 1000));
       updateTimer(left);
       if (left <= 0) {
         clearInterval(s.tick);
-        var p = s.players[s.turn];
-        p.alive = false;
-        s.history.unshift({ type: "out", player: p.name, reason: "ran out of time" });
-        nextPPTurn(false);
+        s.tick = null;
+        timeoutPP();
       }
     }, 250);
   }
 
+  function beginTurn() {
+    var s = PP.state;
+    if (s.tick) { clearInterval(s.tick); s.tick = null; }
+    if (alivePP().length <= 1) return endPP();
+    while (!s.players[s.turn].alive) s.turn = (s.turn + 1) % s.players.length;
+    s.lastRejected = null;
+    s.paused = false;
+    s.challenge = null;
+    if (s.timerSecs > 0) { s.deadline = Date.now() + s.timerSecs * 1000; startTick(); }
+    else { s.deadline = 0; }
+    renderPPGame();
+    var input = document.getElementById("pp-guess");
+    if (input) input.focus();
+  }
+
+  function advanceTurn() {
+    var s = PP.state;
+    do { s.turn = (s.turn + 1) % s.players.length; } while (!s.players[s.turn].alive);
+    beginTurn();
+  }
+
+  function timeoutPP() {
+    var s = PP.state;
+    var p = s.players[s.turn];
+    p.alive = false;
+    s.history.unshift({ type: "out", player: p.name, reason: "ran out of time" });
+    advanceTurn();
+  }
+
+  function giveUpPP() {
+    var s = PP.state;
+    if (s.tick) { clearInterval(s.tick); s.tick = null; }
+    var p = s.players[s.turn];
+    p.alive = false;
+    s.history.unshift({ type: "out", player: p.name, reason: "gave up" });
+    advanceTurn();
+  }
+
+  function pausePP() {
+    var s = PP.state;
+    if (s.paused) return;
+    if (s.timerSecs > 0) s.remaining = Math.max(0, s.deadline - Date.now());
+    if (s.tick) { clearInterval(s.tick); s.tick = null; }
+    s.paused = true;
+    renderPPGame();
+  }
+
+  function resumePP() {
+    var s = PP.state;
+    s.paused = false;
+    s.challenge = null;
+    if (s.timerSecs > 0) {
+      s.deadline = Date.now() + (s.remaining || s.timerSecs * 1000);
+      startTick();
+    }
+    renderPPGame();
+    var input = document.getElementById("pp-guess");
+    if (input) input.focus();
+  }
+
+  function challengePP() {
+    var s = PP.state;
+    if (s.timerSecs > 0 && !s.paused) s.remaining = Math.max(0, s.deadline - Date.now());
+    if (s.tick) { clearInterval(s.tick); s.tick = null; }
+    s.paused = true;
+    if (s.lastRejected) {
+      s.challenge = { kind: "rejected", guess: s.lastRejected, player: s.players[s.turn].name };
+    } else if (s.turnsStack.length) {
+      var t = s.turnsStack[s.turnsStack.length - 1];
+      s.challenge = { kind: "accepted", name: t.name, player: s.players[t.playerIndex] ? s.players[t.playerIndex].name : "?" };
+    } else {
+      s.challenge = { kind: "none" };
+    }
+    renderPPGame();
+  }
+
+  function resolvePP(decision) {
+    var s = PP.state;
+    var ch = s.challenge;
+    s.challenge = null;
+    if (!ch) return resumePP();
+
+    if (ch.kind === "rejected" && decision === "allow") {
+      var guess = ch.guess;
+      var key = NameGameRules.normalize(guess);
+      var nextL = NameGameRules.firstLetterOfLastName(guess);
+      s.used.add(key);
+      s.turnsStack.push({ playerIndex: s.turn, key: key, prevRequiredLetter: s.requiredLetter, name: guess, league: "✓", nextLetter: nextL });
+      s.history.unshift({ type: "said", player: s.players[s.turn].name, name: guess, league: "allowed", nextLetter: nextL });
+      s.requiredLetter = nextL;
+      if (window.FX) FX.good();
+      advanceTurn();
+      return;
+    }
+    if (ch.kind === "accepted" && decision === "reject") {
+      var rec = s.turnsStack.pop();
+      if (rec) {
+        s.used.delete(rec.key);
+        s.requiredLetter = rec.prevRequiredLetter;
+        for (var i = 0; i < s.history.length; i++) {
+          if (s.history[i].type === "said" && s.history[i].name === rec.name) { s.history.splice(i, 1); break; }
+        }
+        s.turn = rec.playerIndex;
+      }
+      beginTurn();
+      return;
+    }
+    resumePP(); // "it counts" / "keep rejected" / nothing
+  }
+
   function updateTimer(left) {
+    var s = PP.state;
     var fill = document.getElementById("pp-timer-fill");
     var num = document.getElementById("pp-timer-num");
-    if (!fill) return;
-    fill.style.width = (left / 30) * 100 + "%";
+    if (!fill || !num) return;
+    var denom = s.timerSecs || 30;
+    fill.style.width = (left / denom) * 100 + "%";
     fill.classList.toggle("warn", left <= 10);
     num.classList.toggle("warn", left <= 10);
     num.textContent = left + "s";
@@ -228,6 +355,7 @@
 
   function submitPP() {
     var s = PP.state;
+    if (s.paused) return;
     var input = document.getElementById("pp-guess");
     var fb = document.getElementById("pp-feedback");
     var res = NameGameRules.validate(input.value, {
@@ -239,11 +367,13 @@
     if (!res.ok) {
       fb.textContent = res.message;
       fb.className = "feedback bad";
+      s.lastRejected = input.value.trim();
       if (window.FX) { FX.bad(); FX.shake(document.querySelector("#pp-game .turn-card")); }
       return;
     }
     if (window.FX) FX.good();
     s.used.add(res.key);
+    s.turnsStack.push({ playerIndex: s.turn, key: res.key, prevRequiredLetter: s.requiredLetter, name: res.athlete.name, league: res.athlete.league, nextLetter: res.nextLetter });
     s.requiredLetter = res.nextLetter;
     s.history.unshift({
       type: "said",
@@ -254,13 +384,38 @@
     });
     input.value = "";
     fb.textContent = "";
-    nextPPTurn(false);
+    advanceTurn();
   }
 
   function renderPPGame() {
     var s = PP.state;
     var cur = s.players[s.turn];
     var box = document.getElementById("pp-game");
+
+    var timerHtml = s.timerSecs > 0
+      ? '<div class="timer-wrap"><div class="timer-bar"><div class="timer-fill" id="pp-timer-fill"></div></div>' +
+        '<div class="timer-num" id="pp-timer-num">' + s.timerSecs + "s</div></div>"
+      : '<div class="no-timer">⏱ No time limit — tap “Stuck” to pass your turn</div>';
+
+    var middle;
+    if (s.challenge) {
+      middle = challengePanel(s.challenge);
+    } else if (s.paused) {
+      middle = '<div class="overlay-panel"><div class="op-title">⏸ Paused</div>' +
+        '<button class="primary-btn" id="pp-resume">Resume</button></div>';
+    } else {
+      middle =
+        '<div class="guess-row">' +
+        '<input type="text" id="pp-guess" placeholder="Type an athlete’s name…" autocomplete="off" />' +
+        '<button class="primary-btn" id="pp-submit">Go</button></div>' +
+        '<div class="feedback" id="pp-feedback"></div>' +
+        '<div class="ctl-row">' +
+        '<button class="ctl-btn" id="pp-pause">⏸ Pause</button>' +
+        '<button class="ctl-btn" id="pp-challenge">🚩 Challenge</button>' +
+        '<button class="ctl-btn danger" id="pp-stuck">🏳 Stuck</button>' +
+        "</div>";
+    }
+
     box.innerHTML =
       strip(s.players, s.turn) +
       '<div class="turn-card">' +
@@ -268,24 +423,25 @@
       '<div class="turn-name">' + esc(cur.name) + "</div>" +
       (s.requiredLetter
         ? '<div class="letter-cap">First name must start with</div><div class="letter-badge">' +
-          s.requiredLetter +
-          "</div>"
+          s.requiredLetter + "</div>"
         : '<div class="letter-cap">Opening turn — name any eligible athlete</div>') +
-      '<div class="timer-wrap"><div class="timer-bar"><div class="timer-fill" id="pp-timer-fill"></div></div>' +
-      '<div class="timer-num" id="pp-timer-num">30s</div></div>' +
-      '<div class="guess-row">' +
-      '<input type="text" id="pp-guess" placeholder="Type an athlete’s name…" autocomplete="off" />' +
-      '<button class="primary-btn" id="pp-submit">Go</button>' +
-      "</div>" +
-      '<div class="feedback" id="pp-feedback"></div>' +
+      timerHtml + middle +
       "</div>" +
       historyHtml(s.history);
-    document.getElementById("pp-submit").onclick = submitPP;
-    var input = document.getElementById("pp-guess");
-    input.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") submitPP();
-    });
-    updateTimer(Math.max(0, Math.ceil((s.deadline - Date.now()) / 1000)));
+
+    if (s.challenge) {
+      wireChallenge("pp-game", resolvePP);
+    } else if (s.paused) {
+      document.getElementById("pp-resume").onclick = resumePP;
+    } else {
+      document.getElementById("pp-submit").onclick = submitPP;
+      var input = document.getElementById("pp-guess");
+      input.addEventListener("keydown", function (e) { if (e.key === "Enter") submitPP(); });
+      document.getElementById("pp-pause").onclick = pausePP;
+      document.getElementById("pp-challenge").onclick = challengePP;
+      document.getElementById("pp-stuck").onclick = giveUpPP;
+      if (s.timerSecs > 0) updateTimer(Math.max(0, Math.ceil((s.deadline - Date.now()) / 1000)));
+    }
   }
 
   function endPP() {
@@ -355,6 +511,42 @@
     );
   }
   App.historyHtml = historyHtml;
+
+  // Challenge / discussion panel — shared by Pass & Play and Online.
+  function challengePanel(ch) {
+    var body, buttons;
+    if (ch.kind === "rejected") {
+      body =
+        '<p class="op-sub"><b>' + esc(ch.player) + "</b> says <b>“" + esc(ch.guess) +
+        "”</b> should count, but it wasn’t recognized. Talk it over — does it count?</p>";
+      buttons =
+        '<button class="primary-btn" data-decide="allow">✓ Allow it</button>' +
+        '<button class="ghost-btn" data-decide="keep">✗ Keep it rejected</button>';
+    } else if (ch.kind === "accepted") {
+      body =
+        '<p class="op-sub">Challenging <b>“' + esc(ch.name) + "”</b>" +
+        (ch.player ? " (by <b>" + esc(ch.player) + "</b>)" : "") +
+        ". Talk it over — should it count?</p>";
+      buttons =
+        '<button class="primary-btn" data-decide="count">✓ It counts</button>' +
+        '<button class="ghost-btn" data-decide="reject">✗ Doesn’t count — redo turn</button>';
+    } else {
+      body = '<p class="op-sub">Nothing to challenge yet — play hasn’t started.</p>';
+      buttons = '<button class="primary-btn" data-decide="keep">Back to game</button>';
+    }
+    return (
+      '<div class="overlay-panel challenge"><div class="op-title">🚩 Challenge — discuss together</div>' +
+      body + '<div class="op-actions">' + buttons + "</div></div>"
+    );
+  }
+  App.challengePanel = challengePanel;
+
+  function wireChallenge(containerId, resolveFn) {
+    document.querySelectorAll("#" + containerId + " [data-decide]").forEach(function (b) {
+      b.onclick = function () { resolveFn(b.getAttribute("data-decide")); };
+    });
+  }
+  App.wireChallenge = wireChallenge;
 
   /* ----------------------------------------------------- boot / wiring */
   function wireNav() {

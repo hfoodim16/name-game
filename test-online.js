@@ -1,98 +1,81 @@
-// Headless two-client smoke test for the online multiplayer flow.
+// Headless two-client smoke test for the online multiplayer flow,
+// including the timer setting, pause/resume, challenge, and give-up.
 const { io } = require("socket.io-client");
 const URL = "http://localhost:3000";
 const log = [];
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-
-function mk() {
-  return io(URL, { transports: ["websocket"] });
-}
+const mk = () => io(URL, { transports: ["websocket"] });
+const emit = (s, ev, payload) => new Promise((res) => s.emit(ev, payload, res));
 
 (async () => {
   const A = mk(); // host
   const B = mk(); // joiner
-  let lastRoom = null;
-  [A, B].forEach((s) =>
-    s.on("room:update", (room) => {
-      lastRoom = room;
-    })
-  );
+  let room = null;
+  [A, B].forEach((s) => s.on("room:update", (r) => (room = r)));
+  await new Promise((r) => A.on("connect", r));
+  await new Promise((r) => B.on("connect", r));
 
-  await new Promise((res) => A.on("connect", res));
-  await new Promise((res) => B.on("connect", res));
+  const sockFor = (id) => (A.id === id ? A : B.id === id ? B : null);
+  const check = (label, cond, extra) => log.push([label, cond === true, extra || ""]);
 
-  // create
-  const created = await new Promise((res) =>
-    A.emit("room:create", { name: "Alice", settings: { leagues: ["NBA"], era: "both" } }, res)
-  );
-  log.push(["create", created.ok, "code=" + created.code]);
+  // create with a 30s timer
+  const created = await emit(A, "room:create", { name: "Alice", settings: { leagues: ["NBA"], era: "both", timer: 30 } });
+  check("create (timer=30)", created.ok && created.room.settings.timer === 30, "timer=" + created.room.settings.timer);
   const code = created.code;
+  await emit(B, "room:join", { code, name: "Bob" });
 
-  // join
-  const joined = await new Promise((res) =>
-    B.emit("room:join", { code, name: "Bob" }, res)
-  );
-  log.push(["join", joined.ok, "players=" + joined.room.players.length]);
-
-  // start
   A.emit("game:start");
   await wait(150);
-  log.push(["started", lastRoom.status === "playing", "current=" + nameOf(lastRoom, lastRoom.currentPlayerId)]);
+  check("started + has deadline", room.status === "playing" && !!room.deadlineTs, "deadline set");
 
-  // figure out whose turn, and the right socket
-  function sockFor(id) {
-    return A.id === id ? A : B.id === id ? B : null;
-  }
-  function nameOf(room, id) {
-    const p = room.players.find((x) => x.id === id);
-    return p ? p.name : "?";
-  }
-
-  // wrong player tries to guess -> rejected
-  const wrongId = lastRoom.players.find((p) => p.id !== lastRoom.currentPlayerId).id;
-  const wrongRes = await new Promise((res) =>
-    sockFor(wrongId).emit("game:guess", { guess: "LeBron James" }, res)
-  );
-  log.push(["out-of-turn rejected", wrongRes.ok === false, wrongRes.message]);
-
-  // current player: valid opener
-  let curId = lastRoom.currentPlayerId;
-  const r1 = await new Promise((res) =>
-    sockFor(curId).emit("game:guess", { guess: "Michael Jordan" }, res)
-  );
-  log.push(["opener Michael Jordan", r1.ok, "next=" + lastRoom.requiredLetter]);
-
-  // next player must start with J; give a wrong letter -> rejected
+  // pause / resume
+  sockFor(room.currentPlayerId).emit("game:pause");
   await wait(80);
-  curId = lastRoom.currentPlayerId;
-  const r2bad = await new Promise((res) =>
-    sockFor(curId).emit("game:guess", { guess: "Kobe Bryant" }, res)
-  );
-  log.push(["wrong letter rejected", r2bad.ok === false, r2bad.message]);
-
-  // correct: John Stockton (J)
-  const r2 = await new Promise((res) =>
-    sockFor(curId).emit("game:guess", { guess: "John Stockton" }, res)
-  );
-  log.push(["John Stockton accepted", r2.ok, "next=" + lastRoom.requiredLetter]);
-
-  // repeat Michael Jordan now should be rejected (need S though) -> letter or repeat
+  check("pause freezes clock", room.paused === true && room.deadlineTs === null, "");
+  const other = room.players.find((p) => p.id !== room.currentPlayerId).id;
+  sockFor(other).emit("game:resume"); // anyone can resume
   await wait(80);
-  curId = lastRoom.currentPlayerId;
-  const rRep = await new Promise((res) =>
-    sockFor(curId).emit("game:guess", { guess: "Scottie Pippen" }, res)
-  );
-  log.push(["Scottie Pippen (S) accepted", rRep.ok, "next=" + lastRoom.requiredLetter]);
+  check("resume restarts clock", room.paused === false && !!room.deadlineTs, "");
 
-  console.log("\n=== ONLINE TEST RESULTS ===");
+  // opener
+  let cur = room.currentPlayerId;
+  await emit(sockFor(cur), "game:guess", { guess: "Michael Jordan" });
+  await wait(80);
+  check("opener accepted, next=J", room.requiredLetter === "J", "req=" + room.requiredLetter);
+
+  // CHALLENGE the accepted answer -> doesn't count -> undo
+  sockFor(room.currentPlayerId).emit("game:challenge");
+  await wait(80);
+  check("challenge pauses (accepted)", room.paused && room.challenge && room.challenge.kind === "accepted", room.challenge && room.challenge.kind);
+  sockFor(room.currentPlayerId).emit("game:resolve", { decision: "reject" });
+  await wait(80);
+  check("undo reverts letter to opening", room.requiredLetter === "" && !room.challenge, "req='" + room.requiredLetter + "'");
+
+  // current player makes a bad guess -> challenge -> allow
+  cur = room.currentPlayerId;
+  const bad = await emit(sockFor(cur), "game:guess", { guess: "Nonexistent Person" });
+  check("bad guess rejected", bad.ok === false, bad.message ? bad.message.slice(0, 30) : "");
+  sockFor(cur).emit("game:challenge");
+  await wait(80);
+  check("challenge (rejected kind)", room.challenge && room.challenge.kind === "rejected", room.challenge && room.challenge.kind);
+  sockFor(cur).emit("game:resolve", { decision: "allow" });
+  await wait(80);
+  check("allow accepts it, next=P", room.requiredLetter === "P" && !room.challenge, "req=" + room.requiredLetter);
+
+  // give up (current player concedes) -> someone gets eliminated, game ends (2 players)
+  cur = room.currentPlayerId;
+  sockFor(cur).emit("game:giveup");
+  await wait(80);
+  check("give up ends 2-player game", room.status === "ended" && !!room.winnerId, "status=" + room.status);
+
+  // timer OFF game
+  const A2created = await emit(A, "room:create", { name: "Al", settings: { leagues: ["NBA"], era: "both", timer: 0 } });
+  check("create timer=off", A2created.room.settings.timer === 0, "");
+
+  console.log("\n=== ONLINE FEATURE TEST ===");
   let pass = 0;
-  log.forEach((l) => {
-    const ok = l[1] === true;
-    if (ok) pass++;
-    console.log((ok ? "PASS" : "FAIL") + "  " + l[0] + "  ::  " + (l[2] || ""));
-  });
+  log.forEach((l) => { if (l[1]) pass++; console.log((l[1] ? "PASS" : "FAIL") + "  " + l[0] + "  ::  " + l[2]); });
   console.log(`\n${pass}/${log.length} checks passed`);
-  A.close();
-  B.close();
+  A.close(); B.close();
   process.exit(pass === log.length ? 0 : 1);
 })();

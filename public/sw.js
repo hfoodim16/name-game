@@ -1,6 +1,10 @@
-/* Service worker — makes the app installable and lets Pass & Play work offline.
- * Bump CACHE when you change static assets. */
-const CACHE = "namegame-v1";
+/* Service worker — installable + offline support.
+ * Strategy:
+ *   - App code (html/js/css): NETWORK-FIRST, so deploys show up immediately
+ *     online; falls back to cache when offline.
+ *   - Big rarely-changing assets (athletes.json, icon): CACHE-FIRST for speed.
+ * Bump CACHE to force a clean refresh of cached assets. */
+const CACHE = "namegame-v2";
 const SHELL = [
   "/",
   "/index.html",
@@ -13,6 +17,7 @@ const SHELL = [
   "/manifest.webmanifest",
   "/data/athletes.json",
 ];
+const CACHE_FIRST = ["/data/athletes.json", "/icon.svg", "/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
@@ -31,7 +36,6 @@ self.addEventListener("activate", (e) => {
 
 self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
-  // Never touch socket.io / cross-origin / non-GET — those must hit the network.
   if (
     e.request.method !== "GET" ||
     url.origin !== self.location.origin ||
@@ -39,22 +43,30 @@ self.addEventListener("fetch", (e) => {
   ) {
     return;
   }
-  // App shell + data: cache-first, fall back to network and cache the result.
+
+  const put = (res) => {
+    if (res && res.ok) {
+      const copy = res.clone();
+      caches.open(CACHE).then((c) => c.put(e.request, copy));
+    }
+    return res;
+  };
+
+  // Cache-first for big, stable assets.
+  if (CACHE_FIRST.indexOf(url.pathname) !== -1) {
+    e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request).then(put)));
+    return;
+  }
+
+  // Network-first for everything else (code + navigation).
   e.respondWith(
-    caches.match(e.request).then((hit) => {
-      if (hit) return hit;
-      return fetch(e.request)
-        .then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, copy));
-          }
-          return res;
-        })
-        .catch(() => {
-          // Offline navigation falls back to the cached app shell.
+    fetch(e.request)
+      .then(put)
+      .catch(() =>
+        caches.match(e.request).then((hit) => {
+          if (hit) return hit;
           if (e.request.mode === "navigate") return caches.match("/index.html");
-        });
-    })
+        })
+      )
   );
 });

@@ -285,6 +285,32 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 .hrow.out { color: var(--bad); }
 .hrow.win { color: var(--good); font-weight: 800; }
 
+/* no-timer banner */
+.no-timer { margin: 16px 0 2px; font-size: 13px; color: var(--muted); font-weight: 600; padding: 10px; background: rgba(8,11,19,0.5); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+
+/* control row (pause / challenge / stuck) */
+.ctl-row { display: flex; gap: 8px; margin-top: 12px; }
+.ctl-btn {
+  flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--line); color: var(--muted);
+  border-radius: var(--radius-sm); padding: 11px 6px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: inherit;
+  transition: border-color 0.18s, color 0.18s, transform 0.08s;
+}
+.ctl-btn:hover { border-color: var(--line-strong); color: var(--text); }
+.ctl-btn:active { transform: scale(0.96); }
+.ctl-btn.danger:hover { border-color: var(--bad); color: var(--bad); }
+
+/* pause / challenge overlay panel */
+.overlay-panel {
+  margin-top: 16px; padding: 18px; border-radius: var(--radius);
+  background: rgba(8,11,19,0.55); border: 1px solid var(--line-strong);
+  text-align: center; animation: screen-in 0.25s var(--ease);
+}
+.overlay-panel.challenge { border-color: var(--accent); box-shadow: inset 0 0 0 1px rgba(255,106,26,0.2); }
+.op-title { font-size: 17px; font-weight: 800; margin-bottom: 10px; }
+.op-sub { font-size: 14px; color: var(--muted); line-height: 1.5; margin: 0 0 16px; }
+.op-actions { display: flex; flex-direction: column; gap: 9px; }
+.op-actions .primary-btn, .op-actions .ghost-btn { width: 100%; }
+
 .feedback { min-height: 22px; font-size: 14px; margin-top: 12px; text-align: center; font-weight: 600; transition: color 0.2s; }
 .feedback.bad { color: var(--bad); }
 .feedback.good { color: var(--good); }
@@ -322,7 +348,7 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 .modal-backdrop[hidden] { display: none; }
 .modal { background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 26px; max-width: 440px; box-shadow: var(--shadow); animation: win-in 0.35s var(--ease); }
 .modal h3 { margin-top: 0; font-size: 21px; }
-.modal ol { line-height: 1.65; color: var(--text); padding-left: 20px; margin: 0 0 4px; }
+.modal ol, .modal ul { line-height: 1.65; color: var(--text); padding-left: 20px; margin: 0 0 4px; }
 .modal li { margin-bottom: 9px; }
 .modal .primary-btn { margin-top: 14px; }
 
