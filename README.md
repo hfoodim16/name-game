@@ -85,11 +85,25 @@ listens on `process.env.PORT` — push to GitHub and deploy free on **Render**
 container host. No database required; rooms live in memory. Responses are gzipped
 (the 3.8 MB database ships as ~445 KB).
 
+## Installable (PWA)
+
+The app ships a web manifest + service worker, so it's **installable to a phone
+home screen** ("Add to Home Screen") and Pass & Play works **offline** (the app
+shell and athlete database are cached). This is the stepping stone to a native
+app: wrapping it with [Capacitor](https://capacitorjs.com) produces real iOS /
+Android builds for the App Store, and Capacitor generates the full icon set from
+`public/icon.svg`.
+
+## Keeping it awake (no cold start)
+
+Render's free tier sleeps after ~15 min idle. [`.github/workflows/keep-alive.yml`](.github/workflows/keep-alive.yml)
+pings `/health` every 10 minutes to prevent that — just set an `APP_URL`
+repository variable to your live URL (instructions are in the workflow file).
+
 ## Roadmap toward an app
 
 - Scoring across rounds (not just last-player-standing)
 - Player-supplied names with an honor-system "challenge" fallback for athletes
   not in the database
-- Wrap in React Native / Capacitor for iOS & Android once the web version feels
-  right
+- Wrap in Capacitor for iOS & Android → App Store / Play Store
 ```

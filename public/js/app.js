@@ -220,7 +220,10 @@
     if (!fill) return;
     fill.style.width = (left / 30) * 100 + "%";
     fill.classList.toggle("warn", left <= 10);
+    num.classList.toggle("warn", left <= 10);
     num.textContent = left + "s";
+    if (left <= 5 && left > 0 && left !== PP._lastTick && window.FX) FX.tick();
+    PP._lastTick = left;
   }
 
   function submitPP() {
@@ -236,8 +239,10 @@
     if (!res.ok) {
       fb.textContent = res.message;
       fb.className = "feedback bad";
+      if (window.FX) { FX.bad(); FX.shake(document.querySelector("#pp-game .turn-card")); }
       return;
     }
+    if (window.FX) FX.good();
     s.used.add(res.key);
     s.requiredLetter = res.nextLetter;
     s.history.unshift({
@@ -288,6 +293,7 @@
     if (s.tick) clearInterval(s.tick);
     var winner = alivePP()[0];
     if (winner) s.history.unshift({ type: "win", player: winner.name });
+    if (window.FX) FX.win();
     var box = document.getElementById("pp-game");
     box.innerHTML =
       '<div class="winner-banner"><div class="trophy">🏆</div><h2>' +
@@ -335,7 +341,7 @@
           return (
             '<div class="hrow"><span class="who">' +
             esc(h.player) +
-            '</span><span>' +
+            '</span><span class="nm">' +
             esc(h.name) +
             "</span><span class=\"lg\">" +
             esc(h.league) +

@@ -1,0 +1,31 @@
+name: keep-alive
+
+# Pings the app every 10 minutes so Render's free tier never sleeps
+# (it idles after ~15 min). Result: no more ~30s cold start.
+#
+# SETUP: add a repository variable named APP_URL with your live URL.
+#   GitHub repo -> Settings -> Secrets and variables -> Actions -> Variables
+#   -> New repository variable -> name: APP_URL, value: https://your-app.onrender.com
+#
+# Note: GitHub disables scheduled workflows after 60 days with no repo activity.
+# Any push (or clicking "Run workflow") re-enables it.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /health
+        run: |
+          URL="${{ vars.APP_URL }}"
+          if [ -z "$URL" ]; then
+            echo "APP_URL repository variable is not set — skipping."
+            echo "Add it under Settings -> Secrets and variables -> Actions -> Variables."
+            exit 0
+          fi
+          echo "Pinging $URL/health"
+          curl -fsS --max-time 30 "$URL/health" && echo "" && echo "OK"

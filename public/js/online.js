@@ -88,6 +88,9 @@
     document.getElementById("room-code-badge").textContent = room.code;
     var box = document.getElementById("online-room");
 
+    if (room.status === "ended" && O._prevStatus !== "ended" && window.FX) FX.win();
+    O._prevStatus = room.status;
+
     if (room.status === "lobby") return renderLobby(box, room);
     if (room.status === "ended") return renderEnded(box, room);
     return renderGame(box, room);
@@ -99,9 +102,9 @@
     box.innerHTML =
       '<div class="panel"><h3>Invite players</h3>' +
       '<p class="hint" style="text-align:left">Share this code or link. Players open it and tap Join.</p>' +
+      '<div class="code-hero"><div class="settings-label">Room code</div><div class="big-code">' + esc(room.code) + "</div></div>" +
       '<div class="invite-box"><input type="text" readonly value="' + esc(link) + '" id="invite-link" />' +
-      '<button class="primary-btn copy-btn" id="copy-link">Copy</button></div>' +
-      '<p class="settings-label" style="text-align:center;margin-top:12px">Room code: <b style="letter-spacing:3px">' + esc(room.code) + "</b></p></div>" +
+      '<button class="primary-btn copy-btn" id="copy-link">Copy</button></div></div>' +
       '<div class="panel"><h3>Players (' + room.players.length + ")</h3>" +
       '<div class="players-strip">' +
       room.players.map(function (p) {
@@ -169,7 +172,10 @@
       var submit = function () {
         var fb = document.getElementById("on-feedback");
         socket.emit("game:guess", { guess: input.value }, function (res) {
-          if (res && !res.ok) { fb.textContent = res.message; fb.className = "feedback bad"; }
+          if (res && !res.ok) {
+            fb.textContent = res.message; fb.className = "feedback bad";
+            if (window.FX) { FX.bad(); FX.shake(document.querySelector("#online-room .turn-card")); }
+          } else if (window.FX) FX.good();
         });
       };
       document.getElementById("on-submit").onclick = submit;
@@ -207,7 +213,11 @@
       var left = Math.max(0, Math.ceil((deadlineTs - Date.now()) / 1000));
       fill.style.width = (left / 30) * 100 + "%";
       fill.classList.toggle("warn", left <= 10);
+      num.classList.toggle("warn", left <= 10);
       num.textContent = left + "s";
+      var meTurn = O.room && O.room.currentPlayerId === O.myId;
+      if (meTurn && left <= 5 && left > 0 && left !== O._lastTick && window.FX) FX.tick();
+      O._lastTick = left;
     }
     paint();
     O.tick = setInterval(paint, 250);

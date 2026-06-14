@@ -2,30 +2,59 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>The Name Game</title>
+    <meta name="description" content="Name an athlete. The next player's first name must start with the last name's first letter. NBA · MLB · NFL · NHL. Pass & play or online with friends." />
+    <meta name="theme-color" content="#080b13" />
+
+    <!-- PWA / installable -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Name Game" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="The Name Game" />
+    <meta property="og:description" content="The athlete-chaining party game. NBA · MLB · NFL · NHL." />
+    <meta property="og:type" content="website" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
   <body>
+    <div class="bg-fx"></div>
+    <canvas id="fx"></canvas>
+    <button class="mute-btn" id="mute-btn" title="Sound on/off" aria-label="Toggle sound">🔊</button>
+
     <div id="app">
       <!-- HOME -->
       <section class="screen active" id="screen-home">
         <div class="hero">
-          <h1 class="logo">THE&nbsp;NAME&nbsp;GAME</h1>
-          <p class="tagline">Name an athlete. The next player's first name must start with the last name's first letter. No repeats. 30 seconds. Don't get stuck.</p>
+          <div class="badgeline">🏀 ⚾ 🏈 🏒 <span class="leagues">NBA · MLB · NFL · NHL</span></div>
+          <h1 class="logo"><span class="small">THE</span>NAME GAME</h1>
+          <p class="tagline">Name an athlete. The next player's first name must start with the <b>first letter of that last name</b>. No repeats. 30 seconds. Don't get stuck.</p>
           <div class="mode-cards">
             <button class="mode-card" data-go="passphone-setup">
               <span class="mode-emoji">📱</span>
-              <span class="mode-title">Pass &amp; Play</span>
-              <span class="mode-sub">One device, take turns around the table.</span>
+              <span class="mode-text">
+                <span class="mode-title">Pass &amp; Play</span>
+                <span class="mode-sub">One device, take turns around the table.</span>
+              </span>
             </button>
-            <button class="mode-card" data-go="online-home">
+            <button class="mode-card online" data-go="online-home">
               <span class="mode-emoji">🌐</span>
-              <span class="mode-title">Play Online</span>
-              <span class="mode-sub">Create a room, invite friends on their own phones.</span>
+              <span class="mode-text">
+                <span class="mode-title">Play Online</span>
+                <span class="mode-sub">Create a room, invite friends on their own phones.</span>
+              </span>
             </button>
           </div>
-          <button class="link-btn" id="how-to-btn">How do you play?</button>
+          <button class="link-btn" id="how-to-btn">New here? <u>How to play</u></button>
         </div>
       </section>
 
@@ -62,7 +91,7 @@
         <div class="two-col">
           <div class="panel">
             <h3>Create a room</h3>
-            <p class="hint">You'll be the Admin: pick the leagues and invite players.</p>
+            <p class="hint" style="text-align:left;margin:0 0 12px">You'll be the Admin: pick the leagues and invite players.</p>
             <button class="primary-btn" id="online-create">Create Room</button>
           </div>
           <div class="panel">
@@ -76,7 +105,7 @@
         <p class="hint" id="online-error"></p>
       </section>
 
-      <!-- ONLINE ROOM (lobby + game share this screen) -->
+      <!-- ONLINE ROOM (lobby + game) -->
       <section class="screen" id="screen-online-room">
         <header class="topbar">
           <button class="back" id="online-leave">‹ Leave</button>
@@ -93,7 +122,7 @@
         <ol>
           <li>The Admin picks the leagues (NBA, MLB, NFL, NHL) and whether players can be <b>current</b>, <b>past</b>, or <b>both</b>.</li>
           <li>The first player names any eligible athlete — say, <b>Michael Jordan</b>.</li>
-          <li>Take the <b>first letter of that last name</b> (Jordan → <b>J</b>). The next player must name an athlete whose <b>first name</b> starts with J — like <b>John Stockton</b>.</li>
+          <li>Take the <b>first letter of that last name</b> (Jordan → <b>J</b>). The next player names an athlete whose <b>first name</b> starts with J — like <b>John Stockton</b>.</li>
           <li>Then Stockton → <b>S</b>, so the next first name starts with S, and so on.</li>
           <li><b>No repeats.</b> You have <b>30 seconds</b> per turn. Run out of time and you're eliminated. Last player standing wins.</li>
         </ol>
@@ -102,8 +131,16 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/effects.js"></script>
     <script src="/js/rules.js"></script>
     <script src="/js/app.js"></script>
     <script src="/js/online.js"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("/sw.js").catch(function () {});
+        });
+      }
+    </script>
   </body>
 </html>
