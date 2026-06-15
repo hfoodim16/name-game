@@ -678,7 +678,7 @@
 
   function boot() {
     wireNav();
-    fetch("/data/athletes.json")
+    fetch((window.NG_SERVER || "") + "/data/athletes.json")
       .then(function (r) { return r.json(); })
       .then(function (list) {
         App.athletes = list;

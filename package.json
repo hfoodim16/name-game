@@ -8,7 +8,10 @@
     "start": "node server.js",
     "dev": "node server.js",
     "build-db": "node scripts/build-db.js",
-    "test": "node test-online.js"
+    "test": "node test-online.js",
+    "cap:sync": "cap sync",
+    "cap:ios": "cap sync ios && cap open ios",
+    "cap:android": "cap sync android && cap open android"
   },
   "engines": {
     "node": ">=18"
@@ -19,6 +22,10 @@
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/cli": "^6.2.1",
+    "@capacitor/core": "^6.2.1",
+    "@capacitor/ios": "^6.2.1",
     "socket.io-client": "^4.8.3"
   }
 }

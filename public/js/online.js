@@ -15,7 +15,7 @@
 
   function connect() {
     if (socket) return socket;
-    socket = io();
+    socket = io(window.NG_SERVER || undefined); // remote in native shell, same-origin on web
     O.myId = null;
     socket.on("connect", function () { O.myId = socket.id; });
     socket.on("room:update", function (room) {

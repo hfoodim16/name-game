@@ -6,3 +6,8 @@ npm-debug.log*
 
 # local preview tooling
 .claude/
+
+# Capacitor native projects (generated on your Mac via `npx cap add ios`)
+/ios/
+/android/
+.DS_Store

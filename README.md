@@ -100,10 +100,16 @@ Render's free tier sleeps after ~15 min idle. [`.github/workflows/keep-alive.yml
 pings `/health` every 10 minutes to prevent that — just set an `APP_URL`
 repository variable to your live URL (instructions are in the workflow file).
 
-## Roadmap toward an app
+## Native app (iOS / Android)
 
-- Scoring across rounds (not just last-player-standing)
-- Player-supplied names with an honor-system "challenge" fallback for athletes
-  not in the database
-- Wrap in Capacitor for iOS & Android → App Store / Play Store
+The app is **Capacitor-ready** — see **[APPSTORE.md](APPSTORE.md)** for the full
+build-and-submit guide. In a native shell it bundles the web assets and talks to
+the deployed server for online play (`public/js/config.js`), while Pass & Play
+and the Daily Chain run locally.
+
+## Roadmap
+
+- Player profiles / accounts and cross-device stats
+- Bundle the database into the native app for full first-launch offline
+- Team mode (2v2), reconnect handling, emoji reactions
 ```

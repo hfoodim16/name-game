@@ -1,0 +1,7 @@
+{
+  "appId": "com.harryfoodim.namegame",
+  "appName": "The Name Game",
+  "webDir": "public",
+  "backgroundColor": "#080b13",
+  "ios": { "contentInset": "always" }
+}

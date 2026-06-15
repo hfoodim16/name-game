@@ -22,12 +22,18 @@ const fullIndex = Rules.buildIndex(athletes);
 
 const app = express();
 app.use(compression()); // gzip — the athlete DB is ~3.8MB raw, ~445KB gzipped
+// Allow the native (Capacitor) app to fetch the database cross-origin.
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  next();
+});
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/data", express.static(path.join(__dirname, "data")));
 app.get("/health", (_req, res) => res.json({ ok: true, athletes: athletes.length }));
 
 const server = http.createServer(app);
-const io = new Server(server);
+// CORS so the native shell (capacitor://localhost) can reach Socket.io.
+const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 
 /* ---------------------------------------------------------------- rooms */
 const rooms = new Map(); // code -> room
