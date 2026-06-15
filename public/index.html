@@ -30,6 +30,7 @@
     <div class="bg-fx"></div>
     <canvas id="fx"></canvas>
     <button class="mute-btn" id="mute-btn" title="Sound on/off" aria-label="Toggle sound">🔊</button>
+    <button class="account-btn" id="account-btn" data-go="account" title="Account" aria-label="Account">👤</button>
 
     <div id="app">
       <!-- HOME -->
@@ -85,6 +86,12 @@
           <h2>Pass &amp; Play</h2>
         </header>
         <div id="pp-game"></div>
+      </section>
+
+      <!-- ACCOUNT -->
+      <section class="screen" id="screen-account">
+        <header class="topbar"><button class="back" data-go="home">‹ Back</button><h2>Account</h2></header>
+        <div id="account-body"></div>
       </section>
 
       <!-- DAILY CHALLENGE -->
@@ -149,13 +156,15 @@
       </div>
     </div>
 
-    <script src="/js/config.js"></script>
     <script src="/js/socket.io.min.js"></script>
+    <script src="/js/supabase.min.js"></script>
+    <script src="/js/config.js"></script>
     <script src="/js/effects.js"></script>
     <script src="/js/rules.js"></script>
     <script src="/js/app.js"></script>
     <script src="/js/online.js"></script>
     <script src="/js/daily.js"></script>
+    <script src="/js/account.js"></script>
     <script>
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {

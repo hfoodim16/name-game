@@ -270,6 +270,28 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 .stat-n { font-family: "Outfit", sans-serif; font-weight: 800; font-size: 26px; color: var(--accent-2); }
 .stat-l { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
+/* achievements grid */
+.ach-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+.ach { background: rgba(8,11,19,0.5); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 8px; text-align: center; opacity: 0.45; filter: grayscale(0.7); transition: all 0.2s var(--ease); }
+.ach.on { opacity: 1; filter: none; border-color: var(--accent); background: var(--panel-2); box-shadow: 0 4px 14px rgba(255,106,26,0.18); }
+.ach-ico { font-size: 26px; }
+.ach-t { font-size: 12px; font-weight: 800; margin-top: 4px; }
+.ach-d { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.2; }
+
+/* achievement unlock toast */
+.ach-toast {
+  position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translate(-50%, 140%);
+  z-index: 80; display: flex; align-items: center; gap: 12px;
+  background: linear-gradient(120deg, var(--panel-2), var(--panel-solid)); border: 1px solid var(--accent);
+  border-radius: 14px; padding: 12px 18px; box-shadow: var(--shadow); transition: transform 0.4s var(--ease);
+  max-width: 88vw;
+}
+.ach-toast.show { transform: translate(-50%, 0); }
+.ach-toast .at-ico { font-size: 30px; }
+.ach-toast b { color: var(--accent-2); font-size: 13px; }
+
+@media (max-width: 380px) { .ach-grid { grid-template-columns: repeat(2, 1fr); } }
+
 /* live round/score tag */
 .round-tag { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; justify-content: center; margin-bottom: 12px; font-size: 13px; color: var(--muted); }
 .round-tag .rt-round { font-weight: 800; color: var(--text); background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px; padding: 3px 11px; }
@@ -371,6 +393,15 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
   transition: transform 0.1s, border-color 0.2s;
 }
 .mute-btn:active { transform: scale(0.9); }
+.account-btn {
+  position: fixed; top: calc(12px + env(safe-area-inset-top)); right: 62px; z-index: 40;
+  width: 40px; height: 40px; border-radius: 12px; cursor: pointer;
+  background: var(--panel); border: 1px solid var(--line); color: var(--text);
+  backdrop-filter: blur(10px); font-size: 17px; display: grid; place-items: center;
+  transition: transform 0.1s, border-color 0.2s;
+}
+.account-btn:active { transform: scale(0.9); }
+.account-btn:hover { border-color: var(--accent); }
 
 /* modal */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(4,6,12,0.72); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 70; animation: screen-in 0.25s var(--ease); }

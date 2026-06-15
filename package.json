@@ -25,6 +25,7 @@
     "@capacitor/android": "^6.2.1",
     "@capacitor/cli": "^6.2.1",
     "@capacitor/core": "^6.2.1",
+    "@supabase/supabase-js": "^2.108.2",
     "@capacitor/ios": "^6.2.1",
     "socket.io-client": "^4.8.3"
   }

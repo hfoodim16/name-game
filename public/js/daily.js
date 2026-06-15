@@ -124,6 +124,7 @@
     D.playing = false;
     if (D.tick) { clearInterval(D.tick); D.tick = null; }
     var stats = recordRun(D.chain.length, D.official);
+    if (window.NameGameAccount) NameGameAccount.afterDaily();
     if (window.FX && D.chain.length > 0) FX.win();
     renderDone(stats);
   }

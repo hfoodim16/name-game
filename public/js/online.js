@@ -90,6 +90,19 @@
 
     if ((room.status === "ended" || room.status === "roundover") &&
         O._prevStatus !== room.status && window.FX) FX.win();
+
+    // achievements: record my round / match wins as they happen
+    if (O._prevStatus !== room.status && window.NameGameAccount) {
+      if (room.status === "roundover" && room.roundWinnerId === O.myId) {
+        NameGameAccount.recordRoundWin();
+      }
+      if (room.status === "ended" && room.winnerId === O.myId) {
+        var others = room.scores.filter(function (s) { return s.id !== O.myId; });
+        var flawless = others.every(function (s) { return s.score === 0; });
+        var specialist = room.settings.leagues.length === 1;
+        NameGameAccount.recordMatchWin({ flawless: flawless, specialist: specialist });
+      }
+    }
     O._prevStatus = room.status;
 
     if (room.status === "lobby") return renderLobby(box, room);
@@ -203,11 +216,17 @@
         var input = document.getElementById("on-guess");
         var submit = function () {
           var fb = document.getElementById("on-feedback");
+          var hadDeadline = room.deadlineTs;
           socket.emit("game:guess", { guess: input.value }, function (res) {
             if (res && !res.ok) {
               fb.textContent = res.message; fb.className = "feedback bad";
               if (window.FX) { FX.bad(); FX.shake(document.querySelector("#online-room .turn-card")); }
-            } else if (window.FX) FX.good();
+            } else {
+              if (window.FX) FX.good();
+              if (hadDeadline && hadDeadline - Date.now() < 2000 && window.NameGameAccount) {
+                NameGameAccount.recordFeat("buzzer");
+              }
+            }
           });
         };
         document.getElementById("on-submit").onclick = submit;
