@@ -8,7 +8,9 @@
   var O = {
     room: null,
     myId: null,
-    settings: { leagues: ["NBA", "MLB", "NFL", "NHL"], era: "both", timer: 30 },
+    gameType: "athlete",
+    settings: { leagues: ["NBA", "MLB", "NFL", "NHL"], era: "both", timer: 30, target: 3 },
+    customSettings: { category: "", letterRule: true, timer: 30, target: 3 },
     tick: null,
   };
   window.NameGameOnline = O;
@@ -40,11 +42,20 @@
   };
 
   function wire() {
+    document.querySelectorAll("#online-type [data-type]").forEach(function (b) {
+      b.onclick = function () {
+        O.gameType = b.getAttribute("data-type");
+        document.querySelectorAll("#online-type [data-type]").forEach(function (x) { x.classList.toggle("on", x === b); });
+      };
+    });
     document.getElementById("online-create").onclick = function () {
       err("");
+      if (O.gameType === "custom" && !O.customSettings.category.trim()) {
+        // let them set the category in the lobby; default a placeholder prompt
+      }
       connect().emit(
         "room:create",
-        { name: nameVal(), settings: O.settings },
+        { name: nameVal(), gameType: O.gameType, settings: O.gameType === "custom" ? O.customSettings : O.settings },
         function (res) {
           if (res && res.ok) {
             O.room = res.room;
@@ -70,6 +81,40 @@
       O.room = null;
       App.showScreen("online-home");
     };
+  }
+
+  var C_TIMER = [[0, "Off"], [30, "30s"], [45, "45s"], [60, "60s"], [90, "90s"]];
+  var C_MATCH = [[1, "1"], [2, "2"], [3, "3"], [5, "5"]];
+  function renderCustomSettings(el, s, onChange, editable) {
+    if (s.timer == null) s.timer = 30;
+    if (s.target == null) s.target = 3;
+    if (s.letterRule == null) s.letterRule = true;
+    if (editable === false) {
+      el.innerHTML = "<h3>Settings</h3>" +
+        '<p class="settings-label">Category: <b>' + esc(s.category || "—") + "</b></p>" +
+        '<p class="settings-label">Word chain: <b>' + (s.letterRule ? "On" : "Off") + "</b></p>" +
+        '<p class="settings-label">Turn timer: <b>' + (s.timer ? s.timer + " seconds" : "Off") + "</b></p>" +
+        '<p class="settings-label">Match: <b>first to ' + s.target + "</b></p>";
+      return;
+    }
+    el.innerHTML = "<h3>Settings</h3>" +
+      '<label class="field"><span>Category</span><input type="text" id="oc-cat" maxlength="40" placeholder="e.g. Movies, Countries" value="' + esc(s.category || "") + '" /></label>' +
+      '<p class="settings-label">Word chain <span style="opacity:.7">(next starts with previous last letter)</span></p>' +
+      '<div class="seg" data-oc-chain><button data-v="1" class="' + (s.letterRule ? "on" : "") + '">On</button><button data-v="0" class="' + (!s.letterRule ? "on" : "") + '">Off</button></div>' +
+      '<p class="settings-label" style="margin-top:14px">Turn timer</p>' +
+      '<div class="chip-row" data-oc-timer>' + C_TIMER.map(function (o) { return '<button class="chip ' + (s.timer === o[0] ? "on" : "") + '" data-v="' + o[0] + '">' + o[1] + "</button>"; }).join("") + "</div>" +
+      '<p class="settings-label" style="margin-top:14px">Match length</p>' +
+      '<div class="chip-row" data-oc-match>' + C_MATCH.map(function (o) { return '<button class="chip ' + (s.target === o[0] ? "on" : "") + '" data-v="' + o[0] + '">first to ' + o[1] + "</button>"; }).join("") + "</div>";
+    var cat = document.getElementById("oc-cat");
+    cat.addEventListener("input", function () { s.category = cat.value; onChange && onChange(s); });
+    function seg(sel, set) {
+      el.querySelectorAll(sel + " [data-v]").forEach(function (b) {
+        b.onclick = function () { set(b.getAttribute("data-v")); el.querySelectorAll(sel + " [data-v]").forEach(function (x) { x.classList.toggle("on", x === b); }); onChange && onChange(s); };
+      });
+    }
+    seg("[data-oc-chain]", function (v) { s.letterRule = v === "1"; });
+    seg("[data-oc-timer]", function (v) { s.timer = parseInt(v, 10); });
+    seg("[data-oc-match]", function (v) { s.target = parseInt(v, 10); });
   }
 
   function enterRoom() {
@@ -133,14 +178,16 @@
         : '<p class="hint">Waiting for the Admin to start…</p>');
 
     // settings: editable for host, read-only for others
-    App.renderSettings(
-      document.getElementById("online-settings"),
-      isHost() ? O.settings : room.settings,
-      isHost()
-        ? function (s) { socket.emit("room:settings", { settings: s }); }
-        : null,
-      isHost()
-    );
+    var setEl = document.getElementById("online-settings");
+    if (room.gameType === "custom") {
+      renderCustomSettings(setEl, isHost() ? O.customSettings : room.settings,
+        isHost() ? function (s) { socket.emit("room:settings", { gameType: "custom", settings: s }); } : null,
+        isHost());
+    } else {
+      App.renderSettings(setEl, isHost() ? O.settings : room.settings,
+        isHost() ? function (s) { socket.emit("room:settings", { gameType: "athlete", settings: s }); } : null,
+        isHost());
+    }
 
     document.getElementById("copy-link").onclick = function () {
       var inp = document.getElementById("invite-link");
@@ -151,14 +198,17 @@
 
     if (isHost()) {
       var startBtn = document.getElementById("online-start");
-      startBtn.disabled = room.players.length < 2;
+      var needCat = room.gameType === "custom" && !(room.settings.category || "").trim();
+      startBtn.disabled = room.players.length < 2 || needCat;
       document.getElementById("online-start-hint").textContent =
-        room.players.length < 2 ? "Need at least 2 players to start." : "";
+        room.players.length < 2 ? "Need at least 2 players to start." :
+        needCat ? "Enter a category to start." : "";
       startBtn.onclick = function () { socket.emit("game:start"); };
     }
   }
 
   function renderGame(box, room) {
+    if (room.gameType === "custom") return renderCustomGame(box, room);
     var meTurn = room.currentPlayerId === O.myId;
     var curPlayer = room.players.find(function (p) { return p.id === room.currentPlayerId; });
     var players = room.players.map(function (p) { return { name: p.name, alive: p.alive }; });
@@ -262,6 +312,83 @@
         : '<p class="hint">Waiting for the next round…</p>');
     if (isHost())
       document.getElementById("online-next").onclick = function () { socket.emit("game:nextround"); };
+  }
+
+  function renderCustomGame(box, room) {
+    var meTurn = room.currentPlayerId === O.myId;
+    var cur = room.players.find(function (p) { return p.id === room.currentPlayerId; });
+    var players = room.players.map(function (p) { return { name: p.name, alive: p.alive }; });
+    var curIdx = room.players.findIndex(function (p) { return p.id === room.currentPlayerId; });
+    var cat = room.settings.category || "anything";
+    var secs = room.settings.timer;
+    var d = room.decide;
+    if ((d || room.paused) && O.tick) { clearInterval(O.tick); O.tick = null; }
+
+    var timerHtml = d
+      ? ""
+      : secs > 0
+        ? '<div class="timer-wrap"><div class="timer-bar"><div class="timer-fill" id="on-timer-fill"></div></div><div class="timer-num" id="on-timer-num">' + secs + "s</div></div>"
+        : '<div class="no-timer">⏱ No time limit' + (meTurn ? " — tap “Stuck” if you can’t go" : "") + "</div>";
+
+    var middle;
+    if (d) {
+      if (d.byId === O.myId) {
+        middle = '<div class="overlay-panel"><div class="op-title">🗳️ Waiting on the table…</div>' +
+          '<p class="op-sub">Does <b>“' + esc(d.word) + '”</b> fit <b>' + esc(cat) + "</b>? The others are deciding.</p></div>";
+      } else {
+        middle = '<div class="overlay-panel challenge"><div class="op-title">🗳️ Does it count?</div>' +
+          '<p class="op-sub"><b>' + esc(d.byName) + '</b> said <b>“' + esc(d.word) + '”</b>. Does it fit <b>' + esc(cat) + "</b>?</p>" +
+          '<div class="op-actions"><button class="primary-btn" data-d="1">✓ It counts</button><button class="ghost-btn" data-d="0">✗ Doesn’t count</button></div></div>';
+      }
+    } else if (room.paused) {
+      middle = '<div class="overlay-panel"><div class="op-title">⏸ Paused</div><button class="primary-btn" id="on-resume">Resume</button></div>';
+    } else {
+      middle = (meTurn
+        ? '<div class="guess-row"><input type="text" id="on-guess" placeholder="Name a ' + esc(cat) + '…" autocomplete="off" /><button class="primary-btn" id="on-submit">Go</button></div>'
+        : '<div class="feedback">Waiting for ' + esc(cur ? cur.name : "player") + "…</div>") +
+        '<div class="feedback" id="on-feedback"></div>' +
+        '<div class="ctl-row"><button class="ctl-btn" id="on-pause">⏸ Pause</button>' +
+        (meTurn ? '<button class="ctl-btn danger" id="on-stuck">🏳 Stuck</button>' : "") + "</div>";
+    }
+
+    box.innerHTML =
+      App.roundTag(room.round, scoreRows(room), room.settings.target) +
+      App.strip(players, curIdx) +
+      '<div class="turn-card">' +
+      '<div class="turn-player' + (meTurn ? " you" : "") + '">' + (meTurn ? "Your turn" : "Now up") + "</div>" +
+      '<div class="turn-name">' + esc(cur ? cur.name : "—") + "</div>" +
+      '<div class="letter-cap">Name a <b>' + esc(cat) + "</b>" + (room.settings.letterRule && room.requiredLetter ? " starting with" : "") + "</div>" +
+      (room.settings.letterRule && room.requiredLetter ? '<div class="letter-badge">' + room.requiredLetter + "</div>" : "") +
+      timerHtml + middle + "</div>" +
+      App.historyHtml(room.history);
+
+    if (d) {
+      if (d.byId !== O.myId) {
+        box.querySelectorAll("[data-d]").forEach(function (b) {
+          b.onclick = function () { socket.emit("game:decide", { counts: b.getAttribute("data-d") === "1" }); };
+        });
+      }
+    } else if (room.paused) {
+      document.getElementById("on-resume").onclick = function () { socket.emit("game:resume"); };
+    } else {
+      if (meTurn) {
+        var input = document.getElementById("on-guess");
+        var submit = function () {
+          var fb = document.getElementById("on-feedback");
+          socket.emit("game:guess", { guess: input.value }, function (res) {
+            if (res && !res.ok) { fb.textContent = res.message; fb.className = "feedback bad"; if (window.FX) { FX.bad(); FX.shake(document.querySelector("#online-room .turn-card")); } }
+            else { input.value = ""; }
+          });
+        };
+        document.getElementById("on-submit").onclick = submit;
+        input.addEventListener("keydown", function (e) { if (e.key === "Enter") submit(); });
+        input.focus();
+        var sb = document.getElementById("on-stuck");
+        if (sb) sb.onclick = function () { socket.emit("game:giveup"); };
+      }
+      document.getElementById("on-pause").onclick = function () { socket.emit("game:pause"); };
+      if (secs > 0) startTimer(room.deadlineTs);
+    }
   }
 
   function renderEnded(box, room) {

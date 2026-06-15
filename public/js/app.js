@@ -565,17 +565,16 @@
             );
           if (h.type === "win")
             return '<div class="hrow win">🏆 ' + esc(h.player) + " wins!</div>";
+          var tag = h.league
+            ? esc(h.league) + (h.nextLetter ? " · →" + esc(h.nextLetter) : "")
+            : "✓";
           return (
             '<div class="hrow"><span class="who">' +
             esc(h.player) +
             '</span><span class="nm">' +
             esc(h.name) +
             (h.typed ? ' <span class="typed">(typed “' + esc(h.typed) + "”)</span>" : "") +
-            "</span><span class=\"lg\">" +
-            esc(h.league) +
-            " · →" +
-            esc(h.nextLetter) +
-            "</span></div>"
+            '</span><span class="lg">' + tag + "</span></div>"
           );
         })
         .join("") +

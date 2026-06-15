@@ -52,7 +52,9 @@ function makeCode() {
 function publicRoom(room) {
   return {
     code: room.code,
+    gameType: room.gameType,
     settings: room.settings,
+    decide: room.decide,
     status: room.status,
     hostId: room.hostId,
     players: room.players.map((p) => ({
@@ -89,6 +91,22 @@ function clearTimer(room) {
     clearTimeout(room.timer);
     room.timer = null;
   }
+}
+
+// Custom: after a rejected name, resume the SAME player's clock (no advance).
+function resumeAfterDecide(room) {
+  clearTimer(room);
+  if (room.settings.timer > 0) {
+    const remaining = room.pauseRemaining || room.settings.timer * 1000;
+    room.deadlineTs = Date.now() + remaining;
+    room.timer = setTimeout(() => {
+      eliminate(room, room.order[room.turnIndex], "ran out of time");
+    }, remaining);
+  } else {
+    room.deadlineTs = null;
+  }
+  room.pauseRemaining = 0;
+  broadcast(room);
 }
 
 // Un-pause: restore the remaining time (or no timer at all).
@@ -128,6 +146,7 @@ function beginTurnAt(room) {
   room.lastRejected = null;
   room.paused = false;
   room.challenge = null;
+  room.decide = null;
   room.pauseRemaining = 0;
   const secs = room.settings.timer;
   if (secs > 0) {
@@ -236,6 +255,7 @@ function resetRoom(room) {
   room.paused = false;
   room.pauseRemaining = 0;
   room.challenge = null;
+  room.decide = null;
   room.turnsStack = [];
   room.lastRejected = null;
   room.scores = {};
@@ -249,12 +269,15 @@ function resetRoom(room) {
 io.on("connection", (socket) => {
   let joinedCode = null;
 
-  socket.on("room:create", ({ name, settings }, cb) => {
+  socket.on("room:create", ({ name, gameType, settings }, cb) => {
     const code = makeCode();
+    const type = gameType === "custom" ? "custom" : "athlete";
     const room = {
       code,
       hostId: socket.id,
-      settings: sanitizeSettings(settings),
+      gameType: type,
+      settings: sanitizeSettings(type, settings),
+      decide: null,
       players: [{ id: socket.id, name: cleanName(name), alive: true }],
       status: "lobby",
       order: [],
@@ -297,10 +320,11 @@ io.on("connection", (socket) => {
     broadcast(room);
   });
 
-  socket.on("room:settings", ({ settings }) => {
+  socket.on("room:settings", ({ gameType, settings }) => {
     const room = rooms.get(joinedCode);
     if (!room || room.hostId !== socket.id || room.status !== "lobby") return;
-    room.settings = sanitizeSettings(settings);
+    if (gameType === "custom" || gameType === "athlete") room.gameType = gameType;
+    room.settings = sanitizeSettings(room.gameType, settings);
     broadcast(room);
   });
 
@@ -327,6 +351,31 @@ io.on("connection", (socket) => {
     const currentId = room.order[room.turnIndex];
     if (currentId !== socket.id)
       return cb && cb({ ok: false, message: "It's not your turn." });
+
+    // ---- Custom Category: honor system, no database; the table rules on it ----
+    if (room.gameType === "custom") {
+      if (room.decide) return cb && cb({ ok: false, message: "Waiting on the table's call." });
+      const raw = (guess || "").trim();
+      const key = customLetters(raw);
+      if (!key) return cb && cb({ ok: false, message: "Type a name." });
+      if (room.usedKeys.has(key))
+        return cb && cb({ ok: false, message: '"' + raw + '" was already said. No repeats!' });
+      if (room.settings.letterRule && room.requiredLetter) {
+        const got = key[0].toUpperCase();
+        if (got !== room.requiredLetter)
+          return cb && cb({ ok: false, message: "Must start with " + room.requiredLetter + ' — "' + raw + '" starts with ' + got + "." });
+      }
+      // letter-valid -> freeze the clock and ask the table to decide
+      if (room.settings.timer > 0 && room.deadlineTs)
+        room.pauseRemaining = Math.max(0, room.deadlineTs - Date.now());
+      clearTimer(room);
+      room.deadlineTs = null;
+      const cp = room.players.find((x) => x.id === socket.id);
+      room.decide = { byId: socket.id, byName: cp ? cp.name : "?", word: raw, key: key, nextLetter: (key.slice(-1) || "").toUpperCase() };
+      cb && cb({ ok: true });
+      broadcast(room);
+      return;
+    }
 
     const result = Rules.validate(guess, {
       index: fullIndex,
@@ -362,6 +411,24 @@ io.on("connection", (socket) => {
     });
     cb && cb({ ok: true, athlete: result.athlete });
     startTurn(room);
+  });
+
+  // --- custom: the table rules on the pending name ------------------------
+  socket.on("game:decide", ({ counts }) => {
+    const room = rooms.get(joinedCode);
+    if (!room || room.status !== "playing" || !room.decide) return;
+    if (!room.players.find((p) => p.id === socket.id)) return;
+    if (socket.id === room.decide.byId) return; // you can't rule on your own answer
+    const d = room.decide;
+    room.decide = null;
+    if (counts) {
+      room.usedKeys.add(d.key);
+      if (room.settings.letterRule) room.requiredLetter = d.nextLetter;
+      room.history.push({ type: "said", player: d.byName, name: d.word });
+      startTurn(room); // accepted -> next player, fresh clock
+    } else {
+      resumeAfterDecide(room); // rejected -> same player goes again
+    }
   });
 
   // --- pause / resume -----------------------------------------------------
@@ -497,21 +564,31 @@ io.on("connection", (socket) => {
 function cleanName(name) {
   return (name || "Player").toString().slice(0, 20).trim() || "Player";
 }
-function sanitizeSettings(s) {
+function sanitizeSettings(gameType, s) {
   s = s || {};
-  const allowed = ["NBA", "MLB", "NFL", "NHL"];
-  let leagues = Array.isArray(s.leagues)
-    ? s.leagues.filter((l) => allowed.indexOf(l) !== -1)
-    : [];
-  if (!leagues.length) leagues = allowed.slice();
-  const era = ["current", "past", "both"].indexOf(s.era) !== -1 ? s.era : "both";
   let timer = parseInt(s.timer, 10);
   if (isNaN(timer)) timer = TURN_SECONDS;
   timer = Math.max(0, Math.min(300, timer)); // 0 = off, capped at 5 min
   let target = parseInt(s.target, 10);
   if (isNaN(target)) target = 3;
   target = Math.max(1, Math.min(15, target)); // rounds to win the match
+
+  if (gameType === "custom") {
+    const category = (s.category || "").toString().slice(0, 40).trim();
+    const letterRule = s.letterRule !== false;
+    return { category, letterRule, timer, target };
+  }
+  const allowed = ["NBA", "MLB", "NFL", "NHL"];
+  let leagues = Array.isArray(s.leagues)
+    ? s.leagues.filter((l) => allowed.indexOf(l) !== -1)
+    : [];
+  if (!leagues.length) leagues = allowed.slice();
+  const era = ["current", "past", "both"].indexOf(s.era) !== -1 ? s.era : "both";
   return { leagues, era, timer, target };
+}
+
+function customLetters(word) {
+  return Rules.normalize(word).replace(/[^a-z0-9]/g, "");
 }
 function shuffle(arr) {
   const a = arr.slice();
