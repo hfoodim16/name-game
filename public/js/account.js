@@ -284,9 +284,25 @@
   // header label (so home can show who's signed in)
   function label() { return session && profile ? "@" + profile.username : "Sign in"; }
 
+  /* ---------------- daily leaderboard ---------------- */
+  function submitDailyScore(day, score) {
+    if (!DB || !session || !profile) return;
+    DB.from("daily_scores")
+      .upsert({ user_id: session.user.id, day: day, username: profile.username, score: score }, { onConflict: "user_id,day" })
+      .then(function () {}, function () {});
+  }
+  function fetchLeaderboard(day, cb) {
+    if (!DB) return cb(null);
+    DB.from("daily_scores").select("username,score").eq("day", day)
+      .order("score", { ascending: false }).limit(50)
+      .then(function (r) { cb(r && !r.error ? (r.data || []) : null); });
+  }
+
   window.NameGameAccount = {
     open: openScreen,
     afterDaily: afterDaily,
+    submitDailyScore: submitDailyScore,
+    fetchLeaderboard: fetchLeaderboard,
     recordRoundWin: recordRoundWin,
     recordMatchWin: recordMatchWin,
     recordFeat: recordFeat,

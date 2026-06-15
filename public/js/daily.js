@@ -124,7 +124,10 @@
     D.playing = false;
     if (D.tick) { clearInterval(D.tick); D.tick = null; }
     var stats = recordRun(D.chain.length, D.official);
-    if (window.NameGameAccount) NameGameAccount.afterDaily();
+    if (window.NameGameAccount) {
+      NameGameAccount.afterDaily();
+      if (D.official) NameGameAccount.submitDailyScore(dateKey(), D.chain.length);
+    }
     if (window.FX && D.chain.length > 0) FX.win();
     renderDone(stats);
   }
@@ -200,9 +203,12 @@
       '<div style="height:12px"></div>' +
       '<button class="primary-btn big" id="daily-share">📋 Share result</button>' +
       '<div style="height:8px"></div>' +
+      '<button class="ghost-btn" id="daily-lb">🏆 Today’s leaderboard</button>' +
+      '<div style="height:8px"></div>' +
       '<button class="ghost-btn" id="daily-practice">Practice run (doesn’t count)</button>' +
       '<div style="height:14px"></div>' +
       chainList();
+    document.getElementById("daily-lb").onclick = renderLeaderboard;
     document.getElementById("daily-share").onclick = function () {
       var txt = shareText(score);
       if (navigator.share) { navigator.share({ text: txt }).catch(function () {}); }
@@ -244,7 +250,10 @@
           '<div style="height:8px"></div><button class="ghost-btn" id="daily-practice2">Practice run</button>'
         : '<button class="primary-btn big" id="daily-start">Start today’s run</button>') +
       "</div>" +
-      statChips(stats);
+      statChips(stats) +
+      '<div style="height:12px"></div>' +
+      '<button class="ghost-btn" id="daily-lb-intro">🏆 Today’s leaderboard</button>';
+    document.getElementById("daily-lb-intro").onclick = renderLeaderboard;
     if (done) {
       document.getElementById("daily-share2").onclick = function () {
         D = { seed: seed, chain: { length: stats.todayScore || 0 } }; // minimal for shareText
@@ -257,6 +266,32 @@
     } else {
       document.getElementById("daily-start").onclick = function () { startRun(true); };
     }
+  }
+
+  function renderLeaderboard() {
+    var box = document.getElementById("daily-body");
+    box.innerHTML =
+      '<div class="turn-card" style="text-align:center">' +
+      '<div class="turn-player">Daily #' + dayNumber() + "</div>" +
+      '<div class="turn-name">🏆 Leaderboard</div>' +
+      '<p class="hint" style="margin:6px 0 0">Today’s top chains · seed ' + esc(todaySeed()) + "</p></div>" +
+      '<div class="panel" id="lb-list"><p class="hint">Loading…</p></div>' +
+      (window.NameGameAccount && !NameGameAccount.isLoggedIn()
+        ? '<p class="hint">Sign in (👤) to appear on the leaderboard.</p>' : "") +
+      '<button class="ghost-btn" id="lb-back">‹ Back to Daily</button>';
+    document.getElementById("lb-back").onclick = renderIntro;
+    var el = document.getElementById("lb-list");
+    if (!window.NameGameAccount) { el.innerHTML = '<p class="hint">Leaderboard unavailable.</p>'; return; }
+    NameGameAccount.fetchLeaderboard(dateKey(), function (rows) {
+      if (!el) return;
+      if (rows === null) { el.innerHTML = '<p class="hint error">Couldn’t load the leaderboard yet.</p>'; return; }
+      if (!rows.length) { el.innerHTML = '<p class="hint">No scores yet today — be the first!</p>'; return; }
+      el.innerHTML = "<h3>Today’s top chains</h3>" + rows.map(function (r, i) {
+        var medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1) + ".";
+        return '<div class="lb-row"><span class="lb-rank">' + medal + '</span><span class="lb-name">@' +
+          esc(r.username) + '</span><span class="lb-score">' + r.score + "</span></div>";
+      }).join("");
+    });
   }
 
   // public entry point (called when navigating to the daily screen)

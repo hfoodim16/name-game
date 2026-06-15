@@ -307,6 +307,13 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 .timer-num { font-size: 13px; color: var(--muted); margin-top: 7px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .timer-num.warn { color: var(--bad); }
 
+/* leaderboard */
+.lb-row { display: flex; align-items: center; gap: 12px; padding: 11px 4px; border-top: 1px solid var(--line); animation: screen-in 0.3s var(--ease); }
+.lb-row:first-of-type { border-top: none; }
+.lb-rank { min-width: 32px; text-align: center; font-weight: 800; font-size: 16px; color: var(--muted); }
+.lb-name { font-weight: 700; }
+.lb-score { margin-left: auto; font-family: "Outfit", sans-serif; font-weight: 800; font-size: 20px; color: var(--accent-2); }
+
 /* daily stats chips */
 .stat-row { display: flex; gap: 10px; }
 .stat { flex: 1; background: var(--panel); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 8px; text-align: center; }
