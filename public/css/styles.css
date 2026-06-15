@@ -287,6 +287,7 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 .hrow { padding: 11px 14px; border-top: 1px solid var(--line); font-size: 14px; display: flex; gap: 8px; align-items: baseline; animation: screen-in 0.3s var(--ease); }
 .hrow .who { color: var(--muted); min-width: 74px; font-weight: 600; font-size: 13px; }
 .hrow .nm { font-weight: 600; }
+.hrow .typed { color: var(--muted); font-weight: 400; font-size: 12px; }
 .hrow .lg { font-size: 11px; padding: 2px 8px; border-radius: 6px; background: var(--panel-2); color: var(--muted); margin-left: auto; white-space: nowrap; font-weight: 700; }
 .hrow.out { color: var(--bad); }
 .hrow.win { color: var(--good); font-weight: 800; }

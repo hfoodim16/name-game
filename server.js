@@ -352,6 +352,7 @@ io.on("connection", (socket) => {
       name: result.athlete.name,
       league: result.athlete.league,
       nextLetter: result.nextLetter,
+      typed: result.typed,
     });
     cb && cb({ ok: true, athlete: result.athlete });
     startTurn(room);

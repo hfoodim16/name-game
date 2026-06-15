@@ -424,6 +424,7 @@
       name: res.athlete.name,
       league: res.athlete.league,
       nextLetter: res.nextLetter,
+      typed: res.typed,
     });
     input.value = "";
     fb.textContent = "";
@@ -569,6 +570,7 @@
             esc(h.player) +
             '</span><span class="nm">' +
             esc(h.name) +
+            (h.typed ? ' <span class="typed">(typed “' + esc(h.typed) + "”)</span>" : "") +
             "</span><span class=\"lg\">" +
             esc(h.league) +
             " · →" +
