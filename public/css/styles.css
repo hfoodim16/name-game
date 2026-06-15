@@ -236,6 +236,12 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 .chip[data-league="NFL"].on .dot { background: #8b6df7; }
 .chip[data-league="NHL"].on { box-shadow: inset 0 0 0 1.5px #2fe6cc, 0 4px 14px rgba(47,230,204,0.2); }
 .chip[data-league="NHL"].on .dot { background: #2fe6cc; }
+.chip[data-league="SOC"].on { box-shadow: inset 0 0 0 1.5px #34d399, 0 4px 14px rgba(52,211,153,0.2); }
+.chip[data-league="SOC"].on .dot { background: #34d399; }
+.chip[data-league="CFB"].on { box-shadow: inset 0 0 0 1.5px #e0b341, 0 4px 14px rgba(224,179,65,0.2); }
+.chip[data-league="CFB"].on .dot { background: #e0b341; }
+.chip[data-league="CBB"].on { box-shadow: inset 0 0 0 1.5px #ef7a52, 0 4px 14px rgba(239,122,82,0.2); }
+.chip[data-league="CBB"].on .dot { background: #ef7a52; }
 
 .seg { display: flex; border: 1.5px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; background: rgba(8,11,19,0.5); }
 .seg button {

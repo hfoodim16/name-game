@@ -4,7 +4,7 @@
  *     online; falls back to cache when offline.
  *   - Big rarely-changing assets (athletes.json, icon): CACHE-FIRST for speed.
  * Bump CACHE to force a clean refresh of cached assets. */
-const CACHE = "namegame-v5";
+const CACHE = "namegame-v6";
 const SHELL = [
   "/",
   "/index.html",

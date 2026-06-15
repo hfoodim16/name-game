@@ -26,7 +26,8 @@
   App.esc = esc;
 
   /* ------------------------------------------------- shared settings UI */
-  var LEAGUES = ["NBA", "MLB", "NFL", "NHL"];
+  var LEAGUES = ["NBA", "MLB", "NFL", "NHL", "SOC", "CFB", "CBB"];
+  var LEAGUE_LABELS = { NBA: "NBA", MLB: "MLB", NFL: "NFL", NHL: "NHL", SOC: "⚽ Soccer", CFB: "🏈 College FB", CBB: "🏀 College BB" };
 
   var TIMER_OPTS = [[0, "Off"], [15, "15s"], [30, "30s"], [45, "45s"], [60, "60s"], [90, "90s"]];
   var MATCH_OPTS = [[1, "1"], [2, "2"], [3, "3"], [5, "5"]];
@@ -61,7 +62,7 @@
           '" data-league="' +
           l +
           '"><span class="dot"></span>' +
-          l +
+          (LEAGUE_LABELS[l] || l) +
           "</button>"
         );
       }).join("") +

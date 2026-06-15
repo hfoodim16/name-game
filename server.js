@@ -578,7 +578,7 @@ function sanitizeSettings(gameType, s) {
     const letterRule = s.letterRule !== false;
     return { category, letterRule, timer, target };
   }
-  const allowed = ["NBA", "MLB", "NFL", "NHL"];
+  const allowed = ["NBA", "MLB", "NFL", "NHL", "SOC", "CFB", "CBB"];
   let leagues = Array.isArray(s.leagues)
     ? s.leagues.filter((l) => allowed.indexOf(l) !== -1)
     : [];

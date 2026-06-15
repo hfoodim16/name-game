@@ -9,7 +9,7 @@
 
   var EPOCH = Date.UTC(2025, 0, 1); // day #1 = 2025-01-01
   var RUN_SECONDS = 45;
-  var SETTINGS = { leagues: ["NBA", "MLB", "NFL", "NHL"], era: "both" };
+  var SETTINGS = { leagues: ["NBA", "MLB", "NFL", "NHL", "SOC", "CFB", "CBB"], era: "both" };
 
   // Curated, recognizable seeds (all in the DB across the four leagues).
   var SEEDS = [

@@ -9,7 +9,7 @@
     room: null,
     myId: null,
     gameType: "athlete",
-    settings: { leagues: ["NBA", "MLB", "NFL", "NHL"], era: "both", timer: 30, target: 3 },
+    settings: { leagues: ["NBA", "MLB", "NFL", "NHL", "SOC", "CFB", "CBB"], era: "both", timer: 30, target: 3 },
     customSettings: { category: "", letterRule: true, timer: 30, target: 3 },
     tick: null,
   };

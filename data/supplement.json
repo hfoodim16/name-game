@@ -1,82 +1,2082 @@
 [
-  { "name": "Jim Brown", "league": "NFL", "era": "past" },
-  { "name": "Johnny Unitas", "league": "NFL", "era": "past" },
-  { "name": "Bart Starr", "league": "NFL", "era": "past" },
-  { "name": "Gale Sayers", "league": "NFL", "era": "past" },
-  { "name": "Dick Butkus", "league": "NFL", "era": "past" },
-  { "name": "Joe Greene", "league": "NFL", "era": "past" },
-  { "name": "Ray Nitschke", "league": "NFL", "era": "past" },
-  { "name": "Gino Marchetti", "league": "NFL", "era": "past" },
-  { "name": "Dick Lane", "league": "NFL", "era": "past" },
-  { "name": "Sammy Baugh", "league": "NFL", "era": "past" },
-  { "name": "Otto Graham", "league": "NFL", "era": "past" },
-  { "name": "Sid Luckman", "league": "NFL", "era": "past" },
-  { "name": "Bronko Nagurski", "league": "NFL", "era": "past" },
-  { "name": "Red Grange", "league": "NFL", "era": "past" },
-  { "name": "Don Hutson", "league": "NFL", "era": "past" },
-  { "name": "Chuck Bednarik", "league": "NFL", "era": "past" },
-  { "name": "Jim Thorpe", "league": "NFL", "era": "past" },
-  { "name": "Mike Ditka", "league": "NFL", "era": "past" },
-  { "name": "Forrest Gregg", "league": "NFL", "era": "past" },
-  { "name": "Lenny Moore", "league": "NFL", "era": "past" },
-  { "name": "Y.A. Tittle", "league": "NFL", "era": "past" },
-  { "name": "Norm Van Brocklin", "league": "NFL", "era": "past" },
-  { "name": "Bobby Layne", "league": "NFL", "era": "past" },
-  { "name": "George Blanda", "league": "NFL", "era": "past" },
-  { "name": "Frank Gifford", "league": "NFL", "era": "past" },
-  { "name": "Hugh McElhenny", "league": "NFL", "era": "past" },
-  { "name": "Joe Perry", "league": "NFL", "era": "past" },
-  { "name": "Marion Motley", "league": "NFL", "era": "past" },
-  { "name": "Steve Van Buren", "league": "NFL", "era": "past" },
-  { "name": "Ollie Matson", "league": "NFL", "era": "past" },
-  { "name": "Jim Taylor", "league": "NFL", "era": "past" },
-  { "name": "Paul Hornung", "league": "NFL", "era": "past" },
-  { "name": "Ernie Nevers", "league": "NFL", "era": "past" },
-  { "name": "Doak Walker", "league": "NFL", "era": "past" },
-  { "name": "Tony Canadeo", "league": "NFL", "era": "past" },
-  { "name": "Bill Dudley", "league": "NFL", "era": "past" },
-  { "name": "Charley Trippi", "league": "NFL", "era": "past" },
-  { "name": "Raymond Berry", "league": "NFL", "era": "past" },
-  { "name": "Tom Fears", "league": "NFL", "era": "past" },
-  { "name": "Elroy Hirsch", "league": "NFL", "era": "past" },
-  { "name": "Pete Pihos", "league": "NFL", "era": "past" },
-  { "name": "Dante Lavelli", "league": "NFL", "era": "past" },
-  { "name": "Leo Nomellini", "league": "NFL", "era": "past" },
-  { "name": "Art Donovan", "league": "NFL", "era": "past" },
-  { "name": "Joe Schmidt", "league": "NFL", "era": "past" },
-  { "name": "Sam Huff", "league": "NFL", "era": "past" },
-  { "name": "Lou Groza", "league": "NFL", "era": "past" },
-  { "name": "Emlen Tunnell", "league": "NFL", "era": "past" },
-  { "name": "Bill George", "league": "NFL", "era": "past" },
-  { "name": "Andy Robustelli", "league": "NFL", "era": "past" },
-  { "name": "Doug Atkins", "league": "NFL", "era": "past" },
-  { "name": "Jim Ringo", "league": "NFL", "era": "past" },
-  { "name": "Mike McCormack", "league": "NFL", "era": "past" },
-  { "name": "Jim Parker", "league": "NFL", "era": "past" },
-  { "name": "Roosevelt Brown", "league": "NFL", "era": "past" },
-  { "name": "George Halas", "league": "NFL", "era": "past" },
-  { "name": "Curly Lambeau", "league": "NFL", "era": "past" },
-  { "name": "Mel Hein", "league": "NFL", "era": "past" },
-  { "name": "Cal Hubbard", "league": "NFL", "era": "past" },
-  { "name": "Clarke Hinkle", "league": "NFL", "era": "past" },
-  { "name": "Dutch Clark", "league": "NFL", "era": "past" },
-  { "name": "Bulldog Turner", "league": "NFL", "era": "past" },
-  { "name": "Bill Hewitt", "league": "NFL", "era": "past" },
-  { "name": "Willie Davis", "league": "NFL", "era": "past" },
-  { "name": "Herb Adderley", "league": "NFL", "era": "past" },
-  { "name": "Willie Wood", "league": "NFL", "era": "past" },
-  { "name": "Bobby Mitchell", "league": "NFL", "era": "past" },
-  { "name": "Charley Taylor", "league": "NFL", "era": "past" },
-  { "name": "Tommy McDonald", "league": "NFL", "era": "past" },
-  { "name": "Sonny Jurgensen", "league": "NFL", "era": "past" },
-  { "name": "Larry Wilson", "league": "NFL", "era": "past" },
-  { "name": "Dave Robinson", "league": "NFL", "era": "past" },
-  { "name": "Henry Jordan", "league": "NFL", "era": "past" },
-  { "name": "Bob St. Clair", "league": "NFL", "era": "past" },
-  { "name": "Gene Hickerson", "league": "NFL", "era": "past" },
-  { "name": "Lou Creekmur", "league": "NFL", "era": "past" },
-  { "name": "Yale Lary", "league": "NFL", "era": "past" },
-  { "name": "Jack Christiansen", "league": "NFL", "era": "past" },
-  { "name": "Tom Landry", "league": "NFL", "era": "past" },
-  { "name": "Vince Lombardi", "league": "NFL", "era": "past" }
+  {
+    "name": "Jim Brown",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Johnny Unitas",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Bart Starr",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Gale Sayers",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Dick Butkus",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Joe Greene",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Ray Nitschke",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Gino Marchetti",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Dick Lane",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Sammy Baugh",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Otto Graham",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Sid Luckman",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Bronko Nagurski",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Red Grange",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Don Hutson",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Chuck Bednarik",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Jim Thorpe",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Mike Ditka",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Forrest Gregg",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Lenny Moore",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Y.A. Tittle",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Norm Van Brocklin",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Bobby Layne",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "George Blanda",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Frank Gifford",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Hugh McElhenny",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Joe Perry",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Marion Motley",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Steve Van Buren",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Ollie Matson",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Jim Taylor",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Paul Hornung",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Ernie Nevers",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Doak Walker",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Tony Canadeo",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Bill Dudley",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Charley Trippi",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Raymond Berry",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Tom Fears",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Elroy Hirsch",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Pete Pihos",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Dante Lavelli",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Leo Nomellini",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Art Donovan",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Joe Schmidt",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Sam Huff",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Lou Groza",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Emlen Tunnell",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Bill George",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Andy Robustelli",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Doug Atkins",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Jim Ringo",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Mike McCormack",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Jim Parker",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Roosevelt Brown",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "George Halas",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Curly Lambeau",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Mel Hein",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Cal Hubbard",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Clarke Hinkle",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Dutch Clark",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Bulldog Turner",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Bill Hewitt",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Willie Davis",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Herb Adderley",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Willie Wood",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Bobby Mitchell",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Charley Taylor",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Tommy McDonald",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Sonny Jurgensen",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Larry Wilson",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Dave Robinson",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Henry Jordan",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Bob St. Clair",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Gene Hickerson",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Lou Creekmur",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Yale Lary",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Jack Christiansen",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Tom Landry",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Vince Lombardi",
+    "league": "NFL",
+    "era": "past"
+  },
+  {
+    "name": "Lionel Messi",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Cristiano Ronaldo",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Zinedine Zidane",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Johan Cruyff",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Francesco Totti",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Gianluigi Buffon",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Karim Benzema",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Robert Lewandowski",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Michel Platini",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Frank Lampard",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Thierry Henry",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Wayne Rooney",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Miroslav Klose",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Antoine Griezmann",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Mohamed Salah",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Iker Casillas",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Manuel Neuer",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Robin van Persie",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Steven Gerrard",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Pep Guardiola",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Paul Pogba",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Gareth Bale",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Eden Hazard",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Harry Kane",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Arjen Robben",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Roberto Baggio",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Lukas Podolski",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Samuel Eto'o",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Fernando Torres",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Didier Drogba",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Sergio Ramos",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Mario Balotelli",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Kevin De Bruyne",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Olivier Giroud",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Gary Lineker",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "George Best",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Lev Yashin",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Marco van Basten",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Thibaut Courtois",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Carlo Ancelotti",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Xabi Alonso",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Romelu Lukaku",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Andriy Shevchenko",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Philipp Lahm",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "David Villa",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Toni Kroos",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Erling Haaland",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Alessandro Del Piero",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Ryan Giggs",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Edinson Cavani",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Daniel Alves",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Roberto Carlos",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Andrea Pirlo",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Fabio Cannavaro",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Joao Grimaldo",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Hugo Lloris",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Percy Liza",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Sergio Busquets",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Bobby Charlton",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Oliver Kahn",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "David de Gea",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Paolo Maldini",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Marcus Rashford",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Michael Ballack",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Marcelo Vieira",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "John Terry",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Michael Owen",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Jordi Alba",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Lamine Yamal",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Carles Puyol",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Paulo Dybala",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Wesley Sneijder",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Dennis Bergkamp",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Marco Reus",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "David Silva",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Son Heung-min",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Didier Deschamps",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Riyad Mahrez",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Bastian Schweinsteiger",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Carlos Tevez",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Mats Hummels",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Keisuke Honda",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Louis van Gaal",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Pepe Reina",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Philippe Coutinho",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Raheem Sterling",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Alan Shearer",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Ruud van Nistelrooy",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Sami Khedira",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Juan Mata",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Ruud Gullit",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Arturo Vidal",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Henrikh Mkhitaryan",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Javier Mascherano",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Rio Ferdinand",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Arthur Antunes Coimbra",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Giorgio Chiellini",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Thiago Silva",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "David Luiz",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Jordan Henderson",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Diego Costa",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Jude Bellingham",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Pierre-Emerick Aubameyang",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Paul Scholes",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Hidetoshi Nakata",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Virgil van Dijk",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Hristo Stoichkov",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Keylor Navas",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Michael Laudrup",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Aaron Ramsey",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Xherdan Shaqiri",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Arda Turan",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Roberto Firmino",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Alisson Becker",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Patrick Vieira",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Andrey Arshavin",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Dani Carvajal",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Frank Rijkaard",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Leonardo Bonucci",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Shinji Kagawa",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Harry Maguire",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Emmanuel Adebayor",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Nicolas Anelka",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Ashley Young",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Klaas-Jan Huntelaar",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Javier Zanetti",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Diogo Jota",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Charles Scott Sherrington",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Ashley Cole",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Mario Kempes",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "David Trezeguet",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Christian Eriksen",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Patrice Evra",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Filippo Inzaghi",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Dino Zoff",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Mikel Arteta",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Makoto Hasebe",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Luis Enrique",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Shinji Okazaki",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Memphis Depay",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Eric Abidal",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Park Ji-Sung",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Salvatore Schillaci",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Mikel John Obi",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Vincent Kompany",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Radamel Falcao",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Diego Simeone",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Dirk Kuyt",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Julian Draxler",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Takumi Minamino",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Jamie Vardy",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Joshua Kimmich",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Achraf Hakimi",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Bukayo Saka",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Takashi Inui",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Samuel Umtiti",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Michael Carrick",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Bill Shankly",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Giuseppe Meazza",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Per Mertesacker",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Luke Shaw",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Igor Akinfeev",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Gheorghe Hagi",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Ronald Koeman",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Alan Dzagoev",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Gennaro Gattuso",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Antonio Valencia",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Peter Schmeichel",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Alberto Gilardino",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Ricardo Quaresma",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Mauro Icardi",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Karl-Heinz Rummenigge",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Yasuhito Endo",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Gary Neville",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Dejan Lovren",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Clarence Seedorf",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Ricardo Carvalho",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Michael Essien",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Divock Origi kolman",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Samir Nasri",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "David Alaba",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Thomas Vermaelen",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Santi Cazorla",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Danny Welbeck",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Yuya Osako",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Kevin Keegan",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Sergio Romero",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Maya Yoshida",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Kasper Schmeichel",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Kazuyoshi Miura",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Guus Hiddink",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Shkodran Mustafi",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Bruno Fernandes",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Dele Alli",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Jordan Pickford",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Gianluigi Donnarumma",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Kai Havertz",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Phil Foden",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Ansu Fati",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Bacary Sagna",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Freddie Ljungberg",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Antonio Conte",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Roberto Mancini",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Toby Alderweireld",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Nicklas Bendtner",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Daniele De Rossi",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Jamie Carragher",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Joe Hart",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Aleksandr Kerzhakov",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Phil Jones",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Luiz Felipe Scolari",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Bruno Alves",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Marcel Desailly",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Kevin-Prince Boateng",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Claudio Ranieri",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Denis Cheryshev",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Atsuto Uchida",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Eiji Kawashima",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Ciro Immobile",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Hiroshi Kiyotake",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Timo Werner",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Federico Valverde",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Kyle Walker",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Dimitar Berbatov",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Robbie Keane",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Leighton Baines",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Maxi Rodriguez",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Fabien Barthez",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "James Milner",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Asamoah Gyan",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Marouane Fellaini",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Claudio Bravo",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Jan Vertonghen",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Vicente del Bosque",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Gaku Shibasaki",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Yoshinori Muto",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Benjamin Pavard",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Trent Alexander-Arnold",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Khvicha Kvaratskhelia",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Jack Wilshere",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Marcello Lippi",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Bobby Robson",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Diego Milito",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Antonio Di Natale",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Claudio Marchisio",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Darijo Srna",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Carlos Valderrama",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Kenny Dalglish",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Fernando Llorente",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Roy Keane",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Shunsuke Nakamura",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Thiago Motta",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Alexandre Pato",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Jupp Heynckes",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Alessandro Nesta",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Marcus Tulio Tanaka",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Takashi Usami",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Dimitri Payet",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Hiroki Sakai",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Hajime Moriyasu",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Kepa Arrizabalaga",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Takuma ano",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Jadon Sancho",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Cole Palmer",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Emre Can",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Chris Smalling",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Andreas Brehme",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Aleksandar Mitrovic",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Andrea Barzagli",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Giovanni van Bronckhorst",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Marco Materazzi",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Axel Witsel",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Mark van Bommel",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Yoshito Okubo",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Hakim Ziyech",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Yasuyuki Konno",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Yuji Nakazawa",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Marco Verratti",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Marcos Rojo",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Marco Asensio",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Blaise Matuidi",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Just Fontaine",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Tito Vilanova",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Robert Pires",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Tim Tebow",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Reggie Bush",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Herschel Walker",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Bo Jackson",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Vince Young",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Matt Leinart",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Charlie Ward",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Desmond Howard",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Eddie George",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Ricky Williams",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Archie Griffin",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Doug Flutie",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Tommie Frazier",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Danny Wuerffel",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Troy Smith",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Robert Griffin",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Johnny Manziel",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Marcus Mariota",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Baker Mayfield",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Kyler Murray",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Joe Burrow",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Jameis Winston",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Charles Woodson",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Andrew Luck",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Cam Newton",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Tim Brown",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Ndamukong Suh",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Bryce Young",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Caleb Williams",
+    "league": "CFB",
+    "era": "past"
+  },
+  {
+    "name": "Christian Laettner",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Pete Maravich",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Bill Walton",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Danny Manning",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Glenn Robinson",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "J.J. Redick",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Tyler Hansbrough",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Adam Morrison",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Jimmer Fredette",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Trae Young",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Zion Williamson",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Grant Hill",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Bobby Hurley",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Shane Battier",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Buddy Hield",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Doug McDermott",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Kemba Walker",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Blake Griffin",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Carmelo Anthony",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Ja Morant",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Caitlin Clark",
+    "league": "CBB",
+    "era": "past"
+  },
+  {
+    "name": "Cooper Flagg",
+    "league": "CBB",
+    "era": "current"
+  },
+  {
+    "name": "Travis Hunter",
+    "league": "CFB",
+    "era": "current"
+  }
 ]
