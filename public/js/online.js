@@ -138,13 +138,16 @@
 
     // achievements: record my round / match wins as they happen
     if (O._prevStatus !== room.status && window.NameGameAccount) {
-      if (room.status === "roundover" && room.roundWinnerId === O.myId) {
-        NameGameAccount.recordRoundWin();
-      }
-      if (room.status === "ended" && room.winnerId === O.myId) {
-        var others = room.scores.filter(function (s) { return s.id !== O.myId; });
-        var flawless = others.every(function (s) { return s.score === 0; });
-        var specialist = room.settings.leagues.length === 1;
+      var meP = room.players.find(function (p) { return p.id === O.myId; });
+      var myTeam = meP ? meP.team : null;
+      var iWonRound = room.teams > 0 ? (myTeam != null && myTeam === room.roundWinnerTeam) : room.roundWinnerId === O.myId;
+      var iWonMatch = room.teams > 0 ? (myTeam != null && myTeam === room.winnerTeam) : room.winnerId === O.myId;
+      if (room.status === "roundover" && iWonRound) NameGameAccount.recordRoundWin();
+      if (room.status === "ended" && iWonMatch) {
+        var specialist = room.settings.leagues && room.settings.leagues.length === 1;
+        var flawless = room.teams > 0
+          ? room.scores.every(function (s) { return s.id === "team" + myTeam || s.score === 0; })
+          : room.scores.filter(function (s) { return s.id !== O.myId; }).every(function (s) { return s.score === 0; });
         NameGameAccount.recordMatchWin({ flawless: flawless, specialist: specialist });
       }
     }
@@ -211,7 +214,7 @@
     if (room.gameType === "custom") return renderCustomGame(box, room);
     var meTurn = room.currentPlayerId === O.myId;
     var curPlayer = room.players.find(function (p) { return p.id === room.currentPlayerId; });
-    var players = room.players.map(function (p) { return { name: p.name, alive: p.alive }; });
+    var players = room.players.map(function (p) { return { name: p.name, alive: p.alive, team: p.team }; });
     var curIdx = room.players.findIndex(function (p) { return p.id === room.currentPlayerId; });
     var secs = room.settings.timer;
 
@@ -297,12 +300,24 @@
     });
   }
 
+  function teamName(i) { return "Team " + ["A", "B", "C", "D"][i]; }
+  function roundWinnerName(room) {
+    if (room.teams > 0) return room.roundWinnerTeam >= 0 ? teamName(room.roundWinnerTeam) : null;
+    var rw = room.players.find(function (p) { return p.id === room.roundWinnerId; });
+    return rw ? rw.name : null;
+  }
+  function matchWinnerName(room) {
+    if (room.teams > 0) return room.winnerTeam >= 0 ? teamName(room.winnerTeam) : null;
+    var w = room.players.find(function (p) { return p.id === room.winnerId; });
+    return w ? w.name : null;
+  }
+
   function renderRoundOver(box, room) {
     if (O.tick) { clearInterval(O.tick); O.tick = null; }
-    var rw = room.players.find(function (p) { return p.id === room.roundWinnerId; });
+    var rwName = roundWinnerName(room);
     box.innerHTML =
       '<div class="winner-banner round"><div class="trophy">🎉</div><h2>' +
-      (rw ? esc(rw.name) + " takes round " + room.round : "Round over") +
+      (rwName ? esc(rwName) + " takes round " + room.round : "Round over") +
       '</h2><p class="hint">First to ' + room.settings.target +
       " wins · next round starts automatically…</p></div>" +
       App.scoreboardHtml(scoreRows(room), room.settings.target) +
@@ -317,7 +332,7 @@
   function renderCustomGame(box, room) {
     var meTurn = room.currentPlayerId === O.myId;
     var cur = room.players.find(function (p) { return p.id === room.currentPlayerId; });
-    var players = room.players.map(function (p) { return { name: p.name, alive: p.alive }; });
+    var players = room.players.map(function (p) { return { name: p.name, alive: p.alive, team: p.team }; });
     var curIdx = room.players.findIndex(function (p) { return p.id === room.currentPlayerId; });
     var cat = room.settings.category || "anything";
     var secs = room.settings.timer;
@@ -393,10 +408,10 @@
 
   function renderEnded(box, room) {
     if (O.tick) { clearInterval(O.tick); O.tick = null; }
-    var w = room.players.find(function (p) { return p.id === room.winnerId; });
+    var wName = matchWinnerName(room);
     box.innerHTML =
       '<div class="winner-banner"><div class="trophy">🏆</div><h2>' +
-      (w ? esc(w.name) + " wins the match!" : "Game over") +
+      (wName ? esc(wName) + " wins the match!" : "Game over") +
       '</h2><p class="hint">Final standings</p></div>' +
       App.scoreboardHtml(scoreRows(room), room.settings.target) +
       '<div style="height:14px"></div>' +

@@ -61,6 +61,7 @@ function publicRoom(room) {
       id: p.id,
       name: p.name,
       alive: p.alive,
+      team: p.team,
       isHost: p.id === room.hostId,
     })),
     currentPlayerId: room.order[room.turnIndex] || null,
@@ -70,10 +71,15 @@ function publicRoom(room) {
     paused: room.paused,
     pauseRemaining: room.pauseRemaining,
     challenge: room.challenge,
-    scores: room.players.map((p) => ({ id: p.id, name: p.name, score: (room.scores && room.scores[p.id]) || 0 })),
+    teams: room.teams || 0,
+    scores: room.teams > 0
+      ? room.teamScores.map((sc, i) => ({ id: "team" + i, name: "Team " + TEAM_LETTER[i], score: sc }))
+      : room.players.map((p) => ({ id: p.id, name: p.name, score: (room.scores && room.scores[p.id]) || 0 })),
     round: room.round,
     roundWinnerId: room.roundWinnerId,
+    roundWinnerTeam: room.roundWinnerTeam,
     winnerId: room.winnerId,
+    winnerTeam: room.winnerTeam,
     lastError: null,
   };
 }
@@ -84,6 +90,16 @@ function broadcast(room) {
 
 function alivePlayers(room) {
   return room.players.filter((p) => p.alive);
+}
+
+const TEAM_LETTER = ["A", "B", "C", "D"];
+function aliveTeams(room) {
+  const set = {};
+  room.players.forEach((p) => { if (p.alive && p.team != null) set[p.team] = true; });
+  return Object.keys(set).map(Number);
+}
+function roundIsOver(room) {
+  return room.teams > 0 ? aliveTeams(room).length <= 1 : aliveOrder(room).length <= 1;
 }
 
 function clearTimer(room) {
@@ -134,7 +150,7 @@ function aliveOrder(room) {
 // Used both for a fresh turn and for "redo turn" after a rejected challenge.
 function beginTurnAt(room) {
   clearTimer(room);
-  if (aliveOrder(room).length <= 1) return endRound(room, aliveOrder(room)[0] || null);
+  if (roundIsOver(room)) return endRound(room);
   // make sure the index lands on an alive player
   let guard = 0;
   while (
@@ -163,7 +179,7 @@ function beginTurnAt(room) {
 // Advance to the next alive player, then begin their turn.
 function startTurn(room) {
   clearTimer(room);
-  if (aliveOrder(room).length <= 1) return endRound(room, aliveOrder(room)[0] || null);
+  if (roundIsOver(room)) return endRound(room);
   let guard = 0;
   do {
     room.turnIndex = (room.turnIndex + 1) % room.order.length;
@@ -182,17 +198,40 @@ function eliminate(room, playerId, reason) {
     room.history.push({ type: "out", player: p.name, reason });
   }
   const alive = alivePlayers(room);
-  if (alive.length <= 1) return endRound(room, alive[0] ? alive[0].id : null);
+  if (roundIsOver(room)) return endRound(room);
   startTurn(room);
 }
 
-// A round ended (one player left). Award a point; if they hit the target it's
-// match over, otherwise show the scoreboard and auto-start the next round.
-function endRound(room, winnerId) {
+// A round ended. Award a point to the last player/team standing; if they hit
+// the target it's match over, else show the scoreboard and auto-advance.
+function endRound(room) {
   clearTimer(room);
   room.deadlineTs = null;
   room.paused = false;
   room.challenge = null;
+  room.decide = null;
+
+  if (room.teams > 0) {
+    const at = aliveTeams(room);
+    const wTeam = at.length ? at[0] : -1;
+    room.roundWinnerTeam = wTeam;
+    room.roundWinnerId = null;
+    if (wTeam >= 0) {
+      room.teamScores[wTeam] = (room.teamScores[wTeam] || 0) + 1;
+      room.history.push({ type: "roundwin", player: "Team " + TEAM_LETTER[wTeam], score: room.teamScores[wTeam] });
+    }
+    if (wTeam >= 0 && room.teamScores[wTeam] >= room.settings.target) {
+      room.status = "ended"; room.winnerTeam = wTeam; room.winnerId = null; broadcast(room);
+    } else {
+      room.status = "roundover"; broadcast(room);
+      if (room.nextTimer) clearTimeout(room.nextTimer);
+      room.nextTimer = setTimeout(() => startRound(room), 6000);
+    }
+    return;
+  }
+
+  const alive = alivePlayers(room);
+  const winnerId = alive.length ? alive[0].id : null;
   room.roundWinnerId = winnerId || null;
   const w = room.players.find((p) => p.id === winnerId);
   if (winnerId) {
@@ -225,6 +264,7 @@ function startRound(room) {
   room.challenge = null;
   room.pauseRemaining = 0;
   room.roundWinnerId = null;
+  room.roundWinnerTeam = -1;
   room.round = (room.round || 0) + 1;
   room.order = shuffle(room.players.map((p) => p.id));
   room.turnIndex = -1;
@@ -232,13 +272,20 @@ function startRound(room) {
   startTurn(room);
 }
 
-// Start a new match: reset scores to zero, then start round 1.
+// Start a new match: reset scores, assign teams, then start round 1.
 function startMatch(room) {
+  let teams = room.settings.teams || 0;
+  if (teams > room.players.length) teams = room.players.length;
+  room.teams = teams;
+  room.players.forEach((p, i) => (p.team = teams > 0 ? i % teams : null));
+  room.teamScores = teams > 0 ? new Array(teams).fill(0) : null;
   room.scores = {};
   room.players.forEach((p) => (room.scores[p.id] = 0));
   room.round = 0;
   room.winnerId = null;
+  room.winnerTeam = -1;
   room.roundWinnerId = null;
+  room.roundWinnerTeam = -1;
   startRound(room);
 }
 
@@ -262,6 +309,11 @@ function resetRoom(room) {
   room.round = 0;
   room.roundWinnerId = null;
   room.winnerId = null;
+  room.teams = 0;
+  room.teamScores = null;
+  room.winnerTeam = -1;
+  room.roundWinnerTeam = -1;
+  room.players.forEach((p) => (p.team = null));
   if (room.nextTimer) { clearTimeout(room.nextTimer); room.nextTimer = null; }
 }
 
@@ -295,6 +347,10 @@ io.on("connection", (socket) => {
       round: 0,
       roundWinnerId: null,
       winnerId: null,
+      teams: 0,
+      teamScores: null,
+      winnerTeam: -1,
+      roundWinnerTeam: -1,
       timer: null,
       nextTimer: null,
     };
@@ -551,7 +607,7 @@ io.on("connection", (socket) => {
 
     if (room.status === "playing") {
       const alive = alivePlayers(room);
-      if (alive.length <= 1) endRound(room, alive[0] ? alive[0].id : null);
+      if (roundIsOver(room)) endRound(room);
       else if (wasCurrent) startTurn(room);
       else broadcast(room);
     } else {
@@ -584,7 +640,10 @@ function sanitizeSettings(gameType, s) {
     : [];
   if (!leagues.length) leagues = allowed.slice();
   const era = ["current", "past", "both"].indexOf(s.era) !== -1 ? s.era : "both";
-  return { leagues, era, timer, target };
+  let teams = parseInt(s.teams, 10);
+  if (isNaN(teams)) teams = 0;
+  teams = Math.max(0, Math.min(4, teams)); // 0 = solo, else 2-4 teams
+  return { leagues, era, timer, target, teams };
 }
 
 function customLetters(word) {
