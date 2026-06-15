@@ -111,6 +111,7 @@ body {
   border: 1px solid var(--line);
 }
 .mode-card.online .mode-emoji { background: linear-gradient(150deg, rgba(47,230,204,0.2), rgba(120,90,255,0.12)); }
+.mode-card.daily .mode-emoji { background: linear-gradient(150deg, rgba(255,106,26,0.25), rgba(251,111,111,0.15)); }
 .mode-text { display: flex; flex-direction: column; gap: 3px; }
 .mode-title { font-size: 19px; font-weight: 800; }
 .mode-sub { font-size: 13px; color: var(--muted); line-height: 1.35; }
@@ -262,6 +263,12 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 @keyframes pulse-bar { 50% { opacity: 0.65; } }
 .timer-num { font-size: 13px; color: var(--muted); margin-top: 7px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .timer-num.warn { color: var(--bad); }
+
+/* daily stats chips */
+.stat-row { display: flex; gap: 10px; }
+.stat { flex: 1; background: var(--panel); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 14px 8px; text-align: center; }
+.stat-n { font-family: "Outfit", sans-serif; font-weight: 800; font-size: 26px; color: var(--accent-2); }
+.stat-l { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
 /* live round/score tag */
 .round-tag { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; justify-content: center; margin-bottom: 12px; font-size: 13px; color: var(--muted); }

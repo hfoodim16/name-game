@@ -664,6 +664,7 @@
       el.addEventListener("click", function () {
         var dest = el.getAttribute("data-go");
         if (dest === "passphone-setup") initPassPhoneSetup();
+        if (dest === "daily" && window.NameGameDaily) window.NameGameDaily.open();
         showScreen(dest);
       });
     });
