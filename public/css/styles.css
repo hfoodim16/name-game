@@ -365,6 +365,11 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 .pill.current::before { content: "▶"; font-size: 9px; color: var(--accent-2); }
 .pill.out { opacity: 0.38; text-decoration: line-through; }
 .pill.host::after { content: "★"; color: var(--accent-2); }
+.pill .team-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.pill.t0 .team-dot { background: #ff6a1a; } .pill.t0 { border-color: rgba(255,106,26,0.5); }
+.pill.t1 .team-dot { background: #2fe6cc; } .pill.t1 { border-color: rgba(47,230,204,0.5); }
+.pill.t2 .team-dot { background: #8b6df7; } .pill.t2 { border-color: rgba(139,109,247,0.5); }
+.pill.t3 .team-dot { background: #ffc24b; } .pill.t3 { border-color: rgba(255,194,75,0.5); }
 
 /* history */
 .history { background: var(--panel); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 4px; max-height: 300px; overflow-y: auto; }

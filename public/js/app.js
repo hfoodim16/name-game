@@ -31,12 +31,14 @@
 
   var TIMER_OPTS = [[0, "Off"], [15, "15s"], [30, "30s"], [45, "45s"], [60, "60s"], [90, "90s"]];
   var MATCH_OPTS = [[1, "1"], [2, "2"], [3, "3"], [5, "5"]];
+  var TEAM_OPTS = [[0, "Solo"], [2, "2 teams"], [3, "3 teams"], [4, "4 teams"]];
 
-  // Renders league chips + era + timer + match selectors into `el`. Calls onChange(settings).
+  // Renders league chips + era + timer + match + teams selectors into `el`.
   // editable=false renders a read-only summary (for non-host players).
   function renderSettings(el, settings, onChange, editable) {
     if (settings.timer == null) settings.timer = 30;
     if (settings.target == null) settings.target = 3;
+    if (settings.teams == null) settings.teams = 0;
     if (editable === false) {
       el.innerHTML =
         '<h3>Settings</h3><p class="settings-label">Leagues: <b>' +
@@ -47,6 +49,8 @@
         (settings.timer ? settings.timer + " seconds" : "Off (no limit)") +
         "</b></p><p class=\"settings-label\">Match: <b>first to " +
         (settings.target || 3) + (settings.target === 1 ? " round" : " rounds") +
+        "</b></p><p class=\"settings-label\">Teams: <b>" +
+        (settings.teams ? settings.teams + " teams" : "Solo (free-for-all)") +
         "</b></p>";
       return;
     }
@@ -106,7 +110,27 @@
           '" data-match-val="' + o[0] + '">first to ' + o[1] + "</button>"
         );
       }).join("") +
+      "</div>" +
+      '<p class="settings-label" style="margin-top:14px">Teams ' +
+      '<span style="opacity:.7">(last team standing wins)</span></p>' +
+      '<div class="chip-row" data-teams>' +
+      TEAM_OPTS.map(function (o) {
+        return (
+          '<button class="chip ' + (settings.teams === o[0] ? "on" : "") +
+          '" data-teams-val="' + o[0] + '">' + o[1] + "</button>"
+        );
+      }).join("") +
       "</div>";
+
+    el.querySelectorAll("[data-teams-val]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        settings.teams = parseInt(btn.getAttribute("data-teams-val"), 10);
+        el.querySelectorAll("[data-teams-val]").forEach(function (b) {
+          b.classList.toggle("on", b === btn);
+        });
+        onChange && onChange(settings);
+      });
+    });
 
     el.querySelectorAll("[data-timer-val]").forEach(function (btn) {
       btn.addEventListener("click", function () {
@@ -153,7 +177,7 @@
   /* ============================================== PASS & PLAY ============ */
   var PP = {
     players: ["Player 1", "Player 2"],
-    settings: { leagues: LEAGUES.slice(), era: "both", timer: 30, target: 3 },
+    settings: { leagues: LEAGUES.slice(), era: "both", timer: 30, target: 3, teams: 0 },
     state: null,
   };
 
@@ -212,11 +236,14 @@
       document.getElementById("pp-start-hint").textContent = "Add at least 2 players.";
       return;
     }
+    var teams = PP.settings.teams || 0;
+    if (teams > names.length) teams = names.length; // no empty teams
     PP.state = {
-      players: names.map(function (n) {
-        return { name: n, alive: true };
+      teams: teams,
+      players: names.map(function (n, i) {
+        return { name: n, alive: true, team: teams > 0 ? i % teams : null };
       }),
-      scores: names.map(function () { return 0; }),
+      scores: teams > 0 ? new Array(teams).fill(0) : names.map(function () { return 0; }),
       round: 0,
       target: PP.settings.target == null ? 3 : PP.settings.target,
       turn: 0,
@@ -258,6 +285,16 @@
     });
   }
 
+  var TEAM_NAMES = ["Team A", "Team B", "Team C", "Team D"];
+  function liveTeamsPP() {
+    var set = {};
+    PP.state.players.forEach(function (p) { if (p.alive) set[p.team] = true; });
+    return Object.keys(set).map(Number);
+  }
+  function roundOverPP() {
+    return PP.state.teams > 0 ? liveTeamsPP().length <= 1 : alivePP().length <= 1;
+  }
+
   function startTick() {
     var s = PP.state;
     if (s.tick) clearInterval(s.tick);
@@ -276,7 +313,7 @@
   function beginTurn() {
     var s = PP.state;
     if (s.tick) { clearInterval(s.tick); s.tick = null; }
-    if (alivePP().length <= 1) return endRoundPP();
+    if (roundOverPP()) return endRoundPP();
     while (!s.players[s.turn].alive) s.turn = (s.turn + 1) % s.players.length;
     s.lastRejected = null;
     s.paused = false;
@@ -493,26 +530,35 @@
   function endRoundPP() {
     var s = PP.state;
     if (s.tick) { clearInterval(s.tick); s.tick = null; }
-    var winnerIdx = -1;
-    for (var i = 0; i < s.players.length; i++) if (s.players[i].alive) { winnerIdx = i; break; }
-    if (winnerIdx >= 0) s.scores[winnerIdx]++;
-    var champ = winnerIdx >= 0 && s.scores[winnerIdx] >= s.target;
     if (window.FX) FX.win();
-    if (champ) renderMatchOverPP(winnerIdx);
-    else renderRoundOverPP(winnerIdx);
+    var winner;
+    if (s.teams > 0) {
+      var lt = liveTeamsPP();
+      var wTeam = lt.length ? lt[0] : -1;
+      if (wTeam >= 0) s.scores[wTeam]++;
+      winner = { name: wTeam >= 0 ? TEAM_NAMES[wTeam] : null, score: wTeam >= 0 ? s.scores[wTeam] : 0 };
+    } else {
+      var wIdx = -1;
+      for (var i = 0; i < s.players.length; i++) if (s.players[i].alive) { wIdx = i; break; }
+      if (wIdx >= 0) s.scores[wIdx]++;
+      winner = { name: wIdx >= 0 ? s.players[wIdx].name : null, score: wIdx >= 0 ? s.scores[wIdx] : 0 };
+    }
+    if (winner.score >= s.target) renderMatchOverPP(winner);
+    else renderRoundOverPP(winner);
   }
 
   function ppRows() {
     var s = PP.state;
+    if (s.teams > 0) return s.scores.map(function (sc, i) { return { name: TEAM_NAMES[i], score: sc }; });
     return s.players.map(function (p, i) { return { name: p.name, score: s.scores[i] }; });
   }
 
-  function renderRoundOverPP(winnerIdx) {
+  function renderRoundOverPP(winner) {
     var s = PP.state;
     var box = document.getElementById("pp-game");
     box.innerHTML =
       '<div class="winner-banner round"><div class="trophy">🎉</div><h2>' +
-      (winnerIdx >= 0 ? esc(s.players[winnerIdx].name) + " takes round " + s.round : "Round over") +
+      (winner.name ? esc(winner.name) + " takes round " + s.round : "Round over") +
       "</h2><p class=\"hint\">First to " + s.target + " wins the match.</p></div>" +
       scoreboardHtml(ppRows(), s.target) +
       '<div style="height:14px"></div>' +
@@ -520,12 +566,12 @@
     document.getElementById("pp-next").onclick = startRoundPP;
   }
 
-  function renderMatchOverPP(winnerIdx) {
+  function renderMatchOverPP(winner) {
     var s = PP.state;
     var box = document.getElementById("pp-game");
     box.innerHTML =
       '<div class="winner-banner"><div class="trophy">🏆</div><h2>' +
-      esc(s.players[winnerIdx].name) + " wins the match!</h2>" +
+      (winner.name ? esc(winner.name) : "Game over") + " wins the match!</h2>" +
       "<p class=\"hint\">Final standings</p></div>" +
       scoreboardHtml(ppRows(), s.target) +
       '<div style="height:14px"></div>' +
@@ -542,8 +588,10 @@
           return (
             '<span class="pill ' +
             (p.alive ? "" : "out ") +
-            (i === currentIdx && p.alive ? "current" : "") +
+            (i === currentIdx && p.alive ? "current " : "") +
+            (p.team != null ? "t" + p.team : "") +
             '">' +
+            (p.team != null ? '<span class="team-dot"></span>' : "") +
             esc(p.name) +
             "</span>"
           );
