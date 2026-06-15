@@ -62,6 +62,9 @@ function publicRoom(room) {
     paused: room.paused,
     pauseRemaining: room.pauseRemaining,
     challenge: room.challenge,
+    scores: room.players.map((p) => ({ id: p.id, name: p.name, score: (room.scores && room.scores[p.id]) || 0 })),
+    round: room.round,
+    roundWinnerId: room.roundWinnerId,
     winnerId: room.winnerId,
     lastError: null,
   };
@@ -107,7 +110,7 @@ function aliveOrder(room) {
 // Used both for a fresh turn and for "redo turn" after a rejected challenge.
 function beginTurnAt(room) {
   clearTimer(room);
-  if (aliveOrder(room).length <= 1) return endGame(room, aliveOrder(room)[0] || null);
+  if (aliveOrder(room).length <= 1) return endRound(room, aliveOrder(room)[0] || null);
   // make sure the index lands on an alive player
   let guard = 0;
   while (
@@ -135,7 +138,7 @@ function beginTurnAt(room) {
 // Advance to the next alive player, then begin their turn.
 function startTurn(room) {
   clearTimer(room);
-  if (aliveOrder(room).length <= 1) return endGame(room, aliveOrder(room)[0] || null);
+  if (aliveOrder(room).length <= 1) return endRound(room, aliveOrder(room)[0] || null);
   let guard = 0;
   do {
     room.turnIndex = (room.turnIndex + 1) % room.order.length;
@@ -154,18 +157,64 @@ function eliminate(room, playerId, reason) {
     room.history.push({ type: "out", player: p.name, reason });
   }
   const alive = alivePlayers(room);
-  if (alive.length <= 1) return endGame(room, alive[0] ? alive[0].id : null);
+  if (alive.length <= 1) return endRound(room, alive[0] ? alive[0].id : null);
   startTurn(room);
 }
 
-function endGame(room, winnerId) {
+// A round ended (one player left). Award a point; if they hit the target it's
+// match over, otherwise show the scoreboard and auto-start the next round.
+function endRound(room, winnerId) {
   clearTimer(room);
-  room.status = "ended";
-  room.winnerId = winnerId;
   room.deadlineTs = null;
+  room.paused = false;
+  room.challenge = null;
+  room.roundWinnerId = winnerId || null;
   const w = room.players.find((p) => p.id === winnerId);
-  if (w) room.history.push({ type: "win", player: w.name });
-  broadcast(room);
+  if (winnerId) {
+    room.scores[winnerId] = (room.scores[winnerId] || 0) + 1;
+    if (w) room.history.push({ type: "roundwin", player: w.name, score: room.scores[winnerId] });
+  }
+  if (winnerId && room.scores[winnerId] >= room.settings.target) {
+    room.status = "ended";
+    room.winnerId = winnerId;
+    broadcast(room);
+  } else {
+    room.status = "roundover";
+    broadcast(room);
+    if (room.nextTimer) clearTimeout(room.nextTimer);
+    room.nextTimer = setTimeout(() => startRound(room), 6000); // auto-advance
+  }
+}
+
+// Begin a fresh round (keeps scores). Order is reshuffled each round.
+function startRound(room) {
+  if (room.nextTimer) { clearTimeout(room.nextTimer); room.nextTimer = null; }
+  clearTimer(room);
+  room.players.forEach((p) => (p.alive = true));
+  room.usedKeys = new Set();
+  room.requiredLetter = "";
+  room.history = [];
+  room.turnsStack = [];
+  room.lastRejected = null;
+  room.paused = false;
+  room.challenge = null;
+  room.pauseRemaining = 0;
+  room.roundWinnerId = null;
+  room.round = (room.round || 0) + 1;
+  room.order = shuffle(room.players.map((p) => p.id));
+  room.turnIndex = -1;
+  room.status = "playing";
+  startTurn(room);
+}
+
+// Start a new match: reset scores to zero, then start round 1.
+function startMatch(room) {
+  room.scores = {};
+  room.players.forEach((p) => (room.scores[p.id] = 0));
+  room.round = 0;
+  room.winnerId = null;
+  room.roundWinnerId = null;
+  startRound(room);
 }
 
 function resetRoom(room) {
@@ -183,7 +232,11 @@ function resetRoom(room) {
   room.challenge = null;
   room.turnsStack = [];
   room.lastRejected = null;
+  room.scores = {};
+  room.round = 0;
+  room.roundWinnerId = null;
   room.winnerId = null;
+  if (room.nextTimer) { clearTimeout(room.nextTimer); room.nextTimer = null; }
 }
 
 /* --------------------------------------------------------------- sockets */
@@ -209,8 +262,12 @@ io.on("connection", (socket) => {
       challenge: null,
       turnsStack: [],
       lastRejected: null,
+      scores: {},
+      round: 0,
+      roundWinnerId: null,
       winnerId: null,
       timer: null,
+      nextTimer: null,
     };
     rooms.set(code, room);
     socket.join(code);
@@ -246,11 +303,14 @@ io.on("connection", (socket) => {
     if (!room || room.hostId !== socket.id) return;
     if (room.players.length < 2) return;
     resetRoom(room);
-    room.status = "playing";
-    room.order = shuffle(room.players.map((p) => p.id));
-    room.turnIndex = -1;
-    room.requiredLetter = "";
-    startTurn(room);
+    startMatch(room); // resets scores, plays round 1
+  });
+
+  socket.on("game:nextround", () => {
+    const room = rooms.get(joinedCode);
+    if (!room || room.status !== "roundover") return;
+    if (room.hostId !== socket.id) return; // host skips the auto-advance wait
+    startRound(room);
   });
 
   socket.on("game:guess", ({ guess }, cb) => {
@@ -409,6 +469,7 @@ io.on("connection", (socket) => {
 
     if (room.players.length === 0) {
       clearTimer(room);
+      if (room.nextTimer) clearTimeout(room.nextTimer);
       rooms.delete(room.code);
       return;
     }
@@ -416,7 +477,7 @@ io.on("connection", (socket) => {
 
     if (room.status === "playing") {
       const alive = alivePlayers(room);
-      if (alive.length <= 1) endGame(room, alive[0] ? alive[0].id : null);
+      if (alive.length <= 1) endRound(room, alive[0] ? alive[0].id : null);
       else if (wasCurrent) startTurn(room);
       else broadcast(room);
     } else {
@@ -440,7 +501,10 @@ function sanitizeSettings(s) {
   let timer = parseInt(s.timer, 10);
   if (isNaN(timer)) timer = TURN_SECONDS;
   timer = Math.max(0, Math.min(300, timer)); // 0 = off, capped at 5 min
-  return { leagues, era, timer };
+  let target = parseInt(s.target, 10);
+  if (isNaN(target)) target = 3;
+  target = Math.max(1, Math.min(15, target)); // rounds to win the match
+  return { leagues, era, timer, target };
 }
 function shuffle(arr) {
   const a = arr.slice();

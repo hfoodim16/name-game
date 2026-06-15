@@ -88,10 +88,12 @@
     document.getElementById("room-code-badge").textContent = room.code;
     var box = document.getElementById("online-room");
 
-    if (room.status === "ended" && O._prevStatus !== "ended" && window.FX) FX.win();
+    if ((room.status === "ended" || room.status === "roundover") &&
+        O._prevStatus !== room.status && window.FX) FX.win();
     O._prevStatus = room.status;
 
     if (room.status === "lobby") return renderLobby(box, room);
+    if (room.status === "roundover") return renderRoundOver(box, room);
     if (room.status === "ended") return renderEnded(box, room);
     return renderGame(box, room);
   }
@@ -178,6 +180,7 @@
     }
 
     box.innerHTML =
+      App.roundTag(room.round, scoreRows(room), room.settings.target) +
       App.strip(players, curIdx) +
       '<div class="turn-card">' +
       '<div class="turn-player' + (meTurn ? " you" : "") + '">' + (meTurn ? "Your turn" : "Now up") + "</div>" +
@@ -219,22 +222,46 @@
     }
   }
 
+  function scoreRows(room) {
+    return room.scores.map(function (s) {
+      return { name: s.name, score: s.score, you: s.id === O.myId };
+    });
+  }
+
+  function renderRoundOver(box, room) {
+    if (O.tick) { clearInterval(O.tick); O.tick = null; }
+    var rw = room.players.find(function (p) { return p.id === room.roundWinnerId; });
+    box.innerHTML =
+      '<div class="winner-banner round"><div class="trophy">🎉</div><h2>' +
+      (rw ? esc(rw.name) + " takes round " + room.round : "Round over") +
+      '</h2><p class="hint">First to ' + room.settings.target +
+      " wins · next round starts automatically…</p></div>" +
+      App.scoreboardHtml(scoreRows(room), room.settings.target) +
+      '<div style="height:14px"></div>' +
+      (isHost()
+        ? '<button class="primary-btn big" id="online-next">Next round now →</button>'
+        : '<p class="hint">Waiting for the next round…</p>');
+    if (isHost())
+      document.getElementById("online-next").onclick = function () { socket.emit("game:nextround"); };
+  }
+
   function renderEnded(box, room) {
     if (O.tick) { clearInterval(O.tick); O.tick = null; }
     var w = room.players.find(function (p) { return p.id === room.winnerId; });
     box.innerHTML =
       '<div class="winner-banner"><div class="trophy">🏆</div><h2>' +
-      (w ? esc(w.name) + " wins!" : "Game over") +
-      '</h2><p class="hint">Last player standing.</p></div>' +
-      (isHost()
-        ? '<button class="primary-btn big" id="online-again">Back to lobby</button>'
-        : '<p class="hint">Waiting for the Admin to start a new game…</p>') +
+      (w ? esc(w.name) + " wins the match!" : "Game over") +
+      '</h2><p class="hint">Final standings</p></div>' +
+      App.scoreboardHtml(scoreRows(room), room.settings.target) +
       '<div style="height:14px"></div>' +
-      App.historyHtml(room.history);
-    if (isHost())
-      document.getElementById("online-again").onclick = function () {
-        socket.emit("game:reset");
-      };
+      (isHost()
+        ? '<button class="primary-btn big" id="online-again">New match</button>' +
+          '<div style="height:10px"></div><button class="ghost-btn" id="online-lobby">Back to lobby</button>'
+        : '<p class="hint">Waiting for the Admin to start a new match…</p>');
+    if (isHost()) {
+      document.getElementById("online-again").onclick = function () { socket.emit("game:start"); };
+      document.getElementById("online-lobby").onclick = function () { socket.emit("game:reset"); };
+    }
   }
 
   function startTimer(deadlineTs) {

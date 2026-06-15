@@ -29,11 +29,13 @@
   var LEAGUES = ["NBA", "MLB", "NFL", "NHL"];
 
   var TIMER_OPTS = [[0, "Off"], [15, "15s"], [30, "30s"], [45, "45s"], [60, "60s"], [90, "90s"]];
+  var MATCH_OPTS = [[1, "1"], [2, "2"], [3, "3"], [5, "5"]];
 
-  // Renders league chips + era + timer selectors into `el`. Calls onChange(settings).
+  // Renders league chips + era + timer + match selectors into `el`. Calls onChange(settings).
   // editable=false renders a read-only summary (for non-host players).
   function renderSettings(el, settings, onChange, editable) {
     if (settings.timer == null) settings.timer = 30;
+    if (settings.target == null) settings.target = 3;
     if (editable === false) {
       el.innerHTML =
         '<h3>Settings</h3><p class="settings-label">Leagues: <b>' +
@@ -42,6 +44,8 @@
         ({ current: "Current only", past: "Past only", both: "Current + Past" }[settings.era]) +
         "</b></p><p class=\"settings-label\">Turn timer: <b>" +
         (settings.timer ? settings.timer + " seconds" : "Off (no limit)") +
+        "</b></p><p class=\"settings-label\">Match: <b>first to " +
+        (settings.target || 3) + (settings.target === 1 ? " round" : " rounds") +
         "</b></p>";
       return;
     }
@@ -91,12 +95,32 @@
           '" data-timer-val="' + o[0] + '">' + o[1] + "</button>"
         );
       }).join("") +
+      "</div>" +
+      '<p class="settings-label" style="margin-top:14px">Match length ' +
+      '<span style="opacity:.7">(rounds to win)</span></p>' +
+      '<div class="chip-row" data-match>' +
+      MATCH_OPTS.map(function (o) {
+        return (
+          '<button class="chip ' + (settings.target === o[0] ? "on" : "") +
+          '" data-match-val="' + o[0] + '">first to ' + o[1] + "</button>"
+        );
+      }).join("") +
       "</div>";
 
     el.querySelectorAll("[data-timer-val]").forEach(function (btn) {
       btn.addEventListener("click", function () {
         settings.timer = parseInt(btn.getAttribute("data-timer-val"), 10);
         el.querySelectorAll("[data-timer-val]").forEach(function (b) {
+          b.classList.toggle("on", b === btn);
+        });
+        onChange && onChange(settings);
+      });
+    });
+
+    el.querySelectorAll("[data-match-val]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        settings.target = parseInt(btn.getAttribute("data-match-val"), 10);
+        el.querySelectorAll("[data-match-val]").forEach(function (b) {
           b.classList.toggle("on", b === btn);
         });
         onChange && onChange(settings);
@@ -128,7 +152,7 @@
   /* ============================================== PASS & PLAY ============ */
   var PP = {
     players: ["Player 1", "Player 2"],
-    settings: { leagues: LEAGUES.slice(), era: "both", timer: 30 },
+    settings: { leagues: LEAGUES.slice(), era: "both", timer: 30, target: 3 },
     state: null,
   };
 
@@ -174,10 +198,10 @@
         renderPlayerEditor();
       }
     };
-    document.getElementById("pp-start").onclick = startPassPhone;
+    document.getElementById("pp-start").onclick = startMatchPP;
   }
 
-  function startPassPhone() {
+  function startMatchPP() {
     var names = PP.players
       .map(function (n) {
         return (n || "").trim();
@@ -191,6 +215,9 @@
       players: names.map(function (n) {
         return { name: n, alive: true };
       }),
+      scores: names.map(function () { return 0; }),
+      round: 0,
+      target: PP.settings.target == null ? 3 : PP.settings.target,
       turn: 0,
       requiredLetter: "",
       used: new Set(),
@@ -205,6 +232,22 @@
       tick: null,
     };
     showScreen("passphone-game");
+    startRoundPP();
+  }
+
+  // Begin a fresh round (keeps scores). The starting player rotates each round.
+  function startRoundPP() {
+    var s = PP.state;
+    s.round++;
+    s.players.forEach(function (p) { p.alive = true; });
+    s.requiredLetter = "";
+    s.used = new Set();
+    s.history = [];
+    s.turnsStack = [];
+    s.lastRejected = null;
+    s.paused = false;
+    s.challenge = null;
+    s.turn = (s.round - 1) % s.players.length;
     beginTurn();
   }
 
@@ -232,7 +275,7 @@
   function beginTurn() {
     var s = PP.state;
     if (s.tick) { clearInterval(s.tick); s.tick = null; }
-    if (alivePP().length <= 1) return endPP();
+    if (alivePP().length <= 1) return endRoundPP();
     while (!s.players[s.turn].alive) s.turn = (s.turn + 1) % s.players.length;
     s.lastRejected = null;
     s.paused = false;
@@ -417,6 +460,7 @@
     }
 
     box.innerHTML =
+      roundTag(s.round, ppRows(), s.target) +
       strip(s.players, s.turn) +
       '<div class="turn-card">' +
       '<div class="turn-player">Now up</div>' +
@@ -444,21 +488,47 @@
     }
   }
 
-  function endPP() {
+  function endRoundPP() {
     var s = PP.state;
-    if (s.tick) clearInterval(s.tick);
-    var winner = alivePP()[0];
-    if (winner) s.history.unshift({ type: "win", player: winner.name });
+    if (s.tick) { clearInterval(s.tick); s.tick = null; }
+    var winnerIdx = -1;
+    for (var i = 0; i < s.players.length; i++) if (s.players[i].alive) { winnerIdx = i; break; }
+    if (winnerIdx >= 0) s.scores[winnerIdx]++;
+    var champ = winnerIdx >= 0 && s.scores[winnerIdx] >= s.target;
     if (window.FX) FX.win();
+    if (champ) renderMatchOverPP(winnerIdx);
+    else renderRoundOverPP(winnerIdx);
+  }
+
+  function ppRows() {
+    var s = PP.state;
+    return s.players.map(function (p, i) { return { name: p.name, score: s.scores[i] }; });
+  }
+
+  function renderRoundOverPP(winnerIdx) {
+    var s = PP.state;
+    var box = document.getElementById("pp-game");
+    box.innerHTML =
+      '<div class="winner-banner round"><div class="trophy">🎉</div><h2>' +
+      (winnerIdx >= 0 ? esc(s.players[winnerIdx].name) + " takes round " + s.round : "Round over") +
+      "</h2><p class=\"hint\">First to " + s.target + " wins the match.</p></div>" +
+      scoreboardHtml(ppRows(), s.target) +
+      '<div style="height:14px"></div>' +
+      '<button class="primary-btn big" id="pp-next">Next round →</button>';
+    document.getElementById("pp-next").onclick = startRoundPP;
+  }
+
+  function renderMatchOverPP(winnerIdx) {
+    var s = PP.state;
     var box = document.getElementById("pp-game");
     box.innerHTML =
       '<div class="winner-banner"><div class="trophy">🏆</div><h2>' +
-      (winner ? esc(winner.name) + " wins!" : "Game over") +
-      "</h2><p class=\"hint\">Last player standing.</p></div>" +
-      '<button class="primary-btn big" id="pp-again">Play again</button>' +
+      esc(s.players[winnerIdx].name) + " wins the match!</h2>" +
+      "<p class=\"hint\">Final standings</p></div>" +
+      scoreboardHtml(ppRows(), s.target) +
       '<div style="height:14px"></div>' +
-      historyHtml(s.history);
-    document.getElementById("pp-again").onclick = startPassPhone;
+      '<button class="primary-btn big" id="pp-newmatch">New match</button>';
+    document.getElementById("pp-newmatch").onclick = startMatchPP;
   }
 
   /* shared render helpers also used by online.js */
@@ -511,6 +581,44 @@
     );
   }
   App.historyHtml = historyHtml;
+
+  // Scoreboard — shared by Pass & Play and Online.
+  // rows: [{ name, score, you }]. Sorted high→low, leader highlighted, with pips toward target.
+  function scoreboardHtml(rows, target) {
+    var sorted = rows.slice().sort(function (a, b) { return b.score - a.score; });
+    var max = sorted.length ? sorted[0].score : 0;
+    function pips(score) {
+      var s = "";
+      for (var i = 0; i < target; i++) s += '<span class="pip' + (i < score ? " on" : "") + '"></span>';
+      return s;
+    }
+    return (
+      '<div class="scoreboard"><div class="sb-head">Standings · first to ' + target + "</div>" +
+      sorted.map(function (r) {
+        return (
+          '<div class="sb-row' + (r.score === max && max > 0 ? " lead" : "") + '">' +
+          '<span class="sb-name">' + (r.score === max && max > 0 ? "👑 " : "") + esc(r.name) +
+          (r.you ? ' <span class="sb-you">(you)</span>' : "") + "</span>" +
+          '<span class="sb-pips">' + pips(r.score) + "</span>" +
+          '<span class="sb-score">' + r.score + "</span></div>"
+        );
+      }).join("") +
+      "</div>"
+    );
+  }
+  App.scoreboardHtml = scoreboardHtml;
+
+  // Compact live score line shown during play. rows: [{name, score}].
+  function roundTag(round, rows, target) {
+    return (
+      '<div class="round-tag"><span class="rt-round">Round ' + round + "</span>" +
+      rows.map(function (r) {
+        return '<span class="rt-p">' + esc(r.name) + ' <b>' + r.score + "</b></span>";
+      }).join("") +
+      '<span class="rt-target">first to ' + target + "</span></div>"
+    );
+  }
+  App.roundTag = roundTag;
 
   // Challenge / discussion panel — shared by Pass & Play and Online.
   function challengePanel(ch) {
