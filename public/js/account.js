@@ -12,6 +12,7 @@
   var profile = null;   // profiles row { username, ... }
   var open = false;     // is the account screen currently shown?
   var mode = "login";   // "login" | "signup" form
+  var confirmEmail = null; // set after signup when email confirmation is required
 
   /* ---------------- stats (shared with daily.js) ---------------- */
   function load() { try { return JSON.parse(localStorage.getItem(STATS_KEY)) || {}; } catch (e) { return {}; } }
@@ -222,6 +223,20 @@
       document.getElementById("acc-signout").onclick = signOut;
       return;
     }
+    if (confirmEmail) {
+      box.innerHTML =
+        '<div class="turn-card" style="text-align:center">' +
+        '<div class="trophy" style="font-size:46px">📧</div>' +
+        '<div class="turn-name" style="font-size:22px">Confirm your email</div>' +
+        '<p class="op-sub" style="margin:10px 0 16px">We sent a confirmation link to <b>' + esc(confirmEmail) +
+        "</b>. Open it (check spam too), then come back and log in.</p>" +
+        '<button class="primary-btn" id="acc-confirm-done">I’ve confirmed — log in</button>' +
+        "</div>";
+      document.getElementById("acc-confirm-done").onclick = function () {
+        confirmEmail = null; mode = "login"; renderAccount();
+      };
+      return;
+    }
     // logged out
     var notice = !DB
       ? '<p class="hint error">Accounts aren’t configured on this build.</p>'
@@ -254,7 +269,7 @@
       function done(r) {
         btn.disabled = false;
         if (!r.ok) return msg(r.message || "Something went wrong.", true);
-        if (r.needsConfirm) return msg("Check your email to confirm, then log in.", false);
+        if (r.needsConfirm) { confirmEmail = email; renderAccount(); return; }
         renderAccount();
       }
       if (mode === "signup") signUp((document.getElementById("acc-user").value || ""), email, pass, done);
