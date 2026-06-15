@@ -8,7 +8,7 @@
   var esc = App.esc;
 
   var EPOCH = Date.UTC(2025, 0, 1); // day #1 = 2025-01-01
-  var RUN_SECONDS = 15;
+  var RUN_SECONDS = 45;
   var SETTINGS = { leagues: ["NBA", "MLB", "NFL", "NHL"], era: "both" };
 
   // Curated, recognizable seeds (all in the DB across the four leagues).
@@ -152,8 +152,8 @@
     var num = document.getElementById("daily-num");
     if (!fill) return;
     fill.style.width = (left / RUN_SECONDS) * 100 + "%";
-    fill.classList.toggle("warn", left <= 5);
-    num.classList.toggle("warn", left <= 5);
+    fill.classList.toggle("warn", left <= 10);
+    num.classList.toggle("warn", left <= 10);
     num.textContent = left + "s";
   }
 
