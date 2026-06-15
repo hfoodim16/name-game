@@ -2078,5 +2078,415 @@
     "name": "Travis Hunter",
     "league": "CFB",
     "era": "current"
+  },
+  {
+    "name": "Kylian Mbappé",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Luka Modrić",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Luis Suárez",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "José Mourinho",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Andrés Iniesta",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Mesut Özil",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Xavi Hernández",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Ferenc Puskás",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Thomas Müller",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Gerard Piqué",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Gerd Müller",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Alfredo Di Stéfano",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Franck Ribéry",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Sadio Mané",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "James Rodríguez",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Diego Forlán",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Cesc Fàbregas",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Jürgen Klopp",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Ángel Di María",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Ivan Rakitić",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Luís Figo",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Joachim Löw",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Jérôme Boateng",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Hernán Crespo",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Raphaël Varane",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Ousmane Dembélé",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Vinícius Júnior",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Nemanja Vidić",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Edwin van der Sar",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Jürgen Klinsmann",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Mario Götze",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Diego Godín",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Yaya Touré",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Mario Mandžukić",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Petr Čech",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Gonzalo Higuaín",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Víctor Valdés",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Alexis Sánchez",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "N'Golo Kanté",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Mario Gómez",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Wojciech Szczęsny",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Marc-André ter Stegen",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Ivan Perišić",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Álvaro Arbeloa",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Álvaro Morata",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Javier Hernánde",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "André Schürrle",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Edin Džeko",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Raúl Albiol",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Rafael van der Vaart",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Yūto Nagatomo",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "İlkay Gündoğan",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "César Azpilicueta",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Pavel Nedvěd",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Branislav Ivanović",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Jesús Navas",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Davor Šuker",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Fábio Coentrão",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Wataru Endō",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Thiago Alcântara",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Júlio César",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Marek Hamšík",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Leonardo Araújo",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Antonio Rüdiger",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Mário Zagallo",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Mateo Kovačić",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Lucas Vázquez",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Rafa Benítez",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Kolo Touré",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Dragan Stojković",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Gōtoku Sakai",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Tomáš Rosický",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Rudi Völler",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Bojan Krkić",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Nicolás Otamendi",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Rafael Márquez",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Juan Román Riquelme",
+    "league": "SOC",
+    "era": "past"
+  },
+  {
+    "name": "Rui Patrício",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Emiliano Martínez",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Gen Shōji",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "Leroy Sané",
+    "league": "SOC",
+    "era": "current"
+  },
+  {
+    "name": "João Félix",
+    "league": "SOC",
+    "era": "current"
   }
 ]
