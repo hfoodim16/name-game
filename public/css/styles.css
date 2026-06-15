@@ -154,6 +154,7 @@ body {
 }
 .mode-card.online .mode-emoji { background: linear-gradient(150deg, rgba(47,230,204,0.2), rgba(120,90,255,0.12)); }
 .mode-card.daily .mode-emoji { background: linear-gradient(150deg, rgba(255,106,26,0.25), rgba(251,111,111,0.15)); }
+.mode-card.custom .mode-emoji { background: linear-gradient(150deg, rgba(120,90,255,0.25), rgba(47,230,204,0.15)); }
 .mode-text { display: flex; flex-direction: column; gap: 3px; }
 .mode-title { font-size: 19px; font-weight: 800; }
 .mode-sub { font-size: 13px; color: var(--muted); line-height: 1.35; }

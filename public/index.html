@@ -72,6 +72,13 @@
                 <span class="mode-sub">Solo. Same seed for everyone — beat your streak.</span>
               </span>
             </button>
+            <button class="mode-card custom" data-go="custom-setup">
+              <span class="mode-emoji">🎨</span>
+              <span class="mode-text">
+                <span class="mode-title">Custom Category</span>
+                <span class="mode-sub">Any category you want. The table votes if it counts.</span>
+              </span>
+            </button>
           </div>
           <button class="link-btn" id="how-to-btn">New here? <u>How to play</u></button>
         </div>
@@ -97,6 +104,16 @@
           <h2>Pass &amp; Play</h2>
         </header>
         <div id="pp-game"></div>
+      </section>
+
+      <!-- CUSTOM CATEGORY -->
+      <section class="screen" id="screen-custom-setup">
+        <header class="topbar"><button class="back" data-go="home">‹ Back</button><h2>Custom Category</h2></header>
+        <div id="custom-setup-body"></div>
+      </section>
+      <section class="screen" id="screen-custom-game">
+        <header class="topbar"><button class="back" data-go="custom-setup">‹ Quit</button><h2>Custom Category</h2></header>
+        <div id="cu-game"></div>
       </section>
 
       <!-- ACCOUNT -->
@@ -175,6 +192,7 @@
     <script src="/js/app.js"></script>
     <script src="/js/online.js"></script>
     <script src="/js/daily.js"></script>
+    <script src="/js/custom.js"></script>
     <script src="/js/account.js"></script>
     <script>
       if ("serviceWorker" in navigator) {
