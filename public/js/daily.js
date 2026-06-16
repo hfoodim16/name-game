@@ -114,6 +114,7 @@
     D.used.add(res.key);
     D.requiredLetter = res.nextLetter;
     D.chain.push({ name: res.athlete.name, league: res.athlete.league, typed: res.typed });
+    if (window.NameGameAccount) NameGameAccount.recordName(res.athlete.name);
     inp.value = ""; fb.textContent = "";
     if (window.FX) FX.good();
     renderPlaying();
