@@ -422,6 +422,24 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 .fr-stat { font-size: 12px; color: var(--muted); margin-top: 2px; }
 .fr-added { font-size: 13px; font-weight: 700; color: var(--good); }
 .primary-btn.sm, .ghost-btn.sm { width: auto; padding: 8px 14px; font-size: 13px; flex-shrink: 0; margin: 0; }
+.fr-main[data-view] { cursor: pointer; border-radius: 9px; transition: background 0.15s var(--ease); }
+.fr-main[data-view]:hover { background: rgba(255,106,26,0.06); }
+.fr-chev { color: var(--accent); font-weight: 900; }
+.back.sm { padding: 7px 12px; font-size: 13px; }
+
+/* incoming game invite */
+.invite-banner {
+  position: fixed; left: 50%; bottom: 18px; transform: translate(-50%, 140%);
+  z-index: 60; width: min(440px, calc(100vw - 28px));
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  background: var(--panel-2); border: 1px solid var(--accent); border-radius: 16px;
+  padding: 14px 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  transition: transform 0.35s var(--ease);
+}
+.invite-banner.show { transform: translate(-50%, 0); }
+.ib-text { flex: 1; min-width: 160px; font-size: 14px; }
+.ib-text b { color: var(--accent-2); }
+.ib-actions { display: flex; gap: 8px; }
 
 /* no-timer banner */
 .no-timer { margin: 16px 0 2px; font-size: 13px; color: var(--muted); font-weight: 600; padding: 10px; background: rgba(8,11,19,0.5); border: 1px solid var(--line); border-radius: var(--radius-sm); }

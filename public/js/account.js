@@ -163,12 +163,14 @@
         mergeIntoLocal(r.data.stats || {}, r.data.achievements || []);
         evaluate(); pushNow();
         loadFriends(function () { if (open) renderAccount(); });
+        startInvitePolling();
         if (open) renderAccount();
       } else {
         var pending = localStorage.getItem("ng-pending-username") || (u.email ? u.email.split("@")[0] : "player");
         createProfile(u.id, pending, function (p) {
           profile = p;
           localStorage.removeItem("ng-pending-username");
+          startInvitePolling();
           if (open) renderAccount();
         });
       }
@@ -202,6 +204,7 @@
     if (DB) DB.auth.signOut();
     session = null; profile = null;
     friends = []; friendsLoaded = false;
+    stopInvitePolling();
     if (open) renderAccount();
   }
 
@@ -262,11 +265,14 @@
     var el = document.getElementById("fr-list");
     if (!el) return;
     if (!friends.length) { el.innerHTML = '<p class="hint">No friends yet — search a username above to add one.</p>'; return; }
-    el.innerHTML = friends.map(function (p) {
-      return '<div class="friend-row"><div class="fr-main"><div class="fr-name">@' + esc(p.username) +
-        '</div><div class="fr-stat">' + friendStatLine(p) + '</div></div>' +
+    el.innerHTML = friends.map(function (p, i) {
+      return '<div class="friend-row"><div class="fr-main" data-view="' + i + '"><div class="fr-name">@' + esc(p.username) +
+        ' <span class="fr-chev">›</span></div><div class="fr-stat">' + friendStatLine(p) + '</div></div>' +
         '<button class="ghost-btn sm" data-rm="' + esc(p.id) + '">Remove</button></div>';
     }).join("");
+    Array.prototype.forEach.call(el.querySelectorAll("[data-view]"), function (m) {
+      m.onclick = function () { renderFriendProfile(friends[+m.getAttribute("data-view")]); };
+    });
     Array.prototype.forEach.call(el.querySelectorAll("[data-rm]"), function (b) {
       b.onclick = function () {
         removeFriend(b.getAttribute("data-rm"), function () {
@@ -312,6 +318,81 @@
     else loadFriends(function () { renderFriendList(); });
   }
 
+  // Full profile of a friend: most-played, stats, badges, + invite to a game.
+  function renderFriendProfile(p) {
+    var box = document.getElementById("account-body");
+    if (!box || !p) return;
+    var st = p.stats || {};
+    box.innerHTML =
+      '<button class="back sm" id="fr-back">‹ Friends</button>' +
+      '<div class="turn-card" style="text-align:center;margin-top:10px">' +
+      '<div class="turn-player you">Friend</div>' +
+      '<div class="turn-name">@' + esc(p.username) + "</div></div>" +
+      mostPlayedFrom(st) +
+      statsPanelFrom(st, (p.achievements || []).length) +
+      '<button class="primary-btn" id="fr-invite">🎮 Invite to a game</button>' +
+      '<p class="hint" id="fr-invite-msg" style="margin:8px 0 14px"></p>' +
+      achGridFrom(p.achievements, "Badges");
+    document.getElementById("fr-back").onclick = function () { renderAccount(); };
+    document.getElementById("fr-invite").onclick = function () { inviteFriend(p, this); };
+  }
+
+  // Create a room (host lands in the lobby) and drop an invite for the friend.
+  function inviteFriend(p, btn) {
+    if (!window.NameGameOnline) return;
+    if (btn) { btn.disabled = true; btn.textContent = "Setting up…"; }
+    NameGameOnline.hostAndInvite(profile ? profile.username : "Player", function (code) {
+      if (!code) { if (btn) { btn.disabled = false; btn.textContent = "🎮 Invite to a game"; } return; }
+      if (DB && session && profile) {
+        DB.from("game_invites").insert({
+          from_user_id: session.user.id, from_username: profile.username,
+          to_user_id: p.id, code: code,
+        }).then(function () {}, function () {});
+      }
+      // host has already been moved into the lobby (online-room screen)
+    });
+  }
+
+  /* ---- incoming invites (polled while signed in) ---- */
+  var invitePoll = null, shownInvites = {};
+  function startInvitePolling() {
+    if (!DB || !session) return;
+    if (invitePoll) clearInterval(invitePoll);
+    pollInvites();
+    invitePoll = setInterval(pollInvites, 6000);
+  }
+  function stopInvitePolling() { if (invitePoll) { clearInterval(invitePoll); invitePoll = null; } shownInvites = {}; }
+  function pollInvites() {
+    if (!DB || !session) return;
+    var since = new Date(Date.now() - 120000).toISOString(); // only recent invites
+    DB.from("game_invites").select("*").eq("to_user_id", session.user.id)
+      .gte("created_at", since).order("created_at", { ascending: false }).limit(1)
+      .then(function (r) {
+        var inv = r && r.data && r.data[0];
+        if (inv && !shownInvites[inv.id]) { shownInvites[inv.id] = true; showInviteBanner(inv); }
+      }, function () {});
+  }
+  function showInviteBanner(inv) {
+    var el = document.createElement("div");
+    el.className = "invite-banner";
+    el.innerHTML =
+      '<div class="ib-text">🎮 <b>@' + esc(inv.from_username || "A friend") + "</b> invited you to a game</div>" +
+      '<div class="ib-actions"><button class="primary-btn sm" id="ib-join">Join</button>' +
+      '<button class="ghost-btn sm" id="ib-no">Dismiss</button></div>';
+    document.body.appendChild(el);
+    setTimeout(function () { el.classList.add("show"); }, 20);
+    function close() {
+      el.classList.remove("show");
+      setTimeout(function () { el.remove(); }, 300);
+      if (DB) DB.from("game_invites").delete().eq("id", inv.id).then(function () {}, function () {});
+    }
+    document.getElementById("ib-join").onclick = function () {
+      close();
+      if (window.NameGameOnline) NameGameOnline.joinByCode(inv.code, profile ? profile.username : "Player");
+    };
+    document.getElementById("ib-no").onclick = close;
+  }
+
   /* ---------------- UI ---------------- */
   function toast(a) {
     var t = document.createElement("div");
@@ -323,13 +404,12 @@
     setTimeout(function () { t.classList.remove("show"); setTimeout(function () { t.remove(); }, 400); }, 3200);
   }
 
-  function achGrid() {
-    var s = load();
+  function achGridFrom(achArr, title) {
     var have = {};
-    (s.achievements || []).forEach(function (id) { have[id] = true; });
-    var count = (s.achievements || []).length;
+    (achArr || []).forEach(function (id) { have[id] = true; });
+    var count = (achArr || []).length;
     return (
-      '<div class="panel"><h3>Achievements (' + count + "/" + ACH.length + ")</h3>" +
+      '<div class="panel"><h3>' + (title || "Achievements") + " (" + count + "/" + ACH.length + ")</h3>" +
       '<div class="ach-grid">' +
       ACH.map(function (a) {
         var on = !!have[a.id];
@@ -339,12 +419,13 @@
       "</div></div>"
     );
   }
+  function achGrid() { return achGridFrom(load().achievements); }
 
   function statBox(n, l) {
     return '<div class="stat"><div class="stat-n">' + n + '</div><div class="stat-l">' + l + "</div></div>";
   }
-  function mostPlayedHtml() {
-    var t = topPlayer(load());
+  function mostPlayedFrom(s) {
+    var t = topPlayer(s || {});
     if (!t) return "";
     return (
       '<div class="panel mvp"><div class="mvp-label">⭐ Most-played player</div>' +
@@ -353,8 +434,10 @@
       '<div style="height:12px"></div>'
     );
   }
-  function statsPanel() {
-    var s = load();
+  function mostPlayedHtml() { return mostPlayedFrom(load()); }
+  function statsPanelFrom(s, badgeCount) {
+    s = s || {};
+    if (badgeCount == null) badgeCount = (s.achievements || []).length;
     return (
       '<div class="panel"><h3>Statistics</h3><div class="stat-grid">' +
       statBox(s.bestChain || 0, "Best chain") +
@@ -364,10 +447,11 @@
       statBox(s.mpRoundWins || 0, "Round wins") +
       statBox(s.namesSaid || 0, "Names said") +
       statBox(s.runs || 0, "Daily runs") +
-      statBox((s.achievements || []).length, "Badges") +
+      statBox(badgeCount, "Badges") +
       "</div></div>"
     );
   }
+  function statsPanel() { return statsPanelFrom(load()); }
 
   function renderAccount() {
     var box = document.getElementById("account-body");

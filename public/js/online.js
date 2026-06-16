@@ -41,6 +41,35 @@
     document.getElementById("online-code").value = code.toUpperCase();
   };
 
+  // Create an athlete room and drop the host into the lobby. cb(code|null).
+  // Used by the Friends "Invite to a game" flow.
+  O.hostAndInvite = function (name, cb) {
+    connect().emit(
+      "room:create",
+      { name: name || "Player", gameType: "athlete", settings: O.settings },
+      function (res) {
+        if (res && res.ok) { O.room = res.room; enterRoom(); cb && cb(res.room.code); }
+        else cb && cb(null);
+      }
+    );
+  };
+
+  // Join a room by code without needing the online-home input (for invites).
+  O.joinByCode = function (code, name) {
+    connect().emit(
+      "room:join",
+      { code: (code || "").toUpperCase(), name: name || "Player" },
+      function (res) {
+        if (res && res.ok) { O.room = res.room; enterRoom(); }
+        else {
+          App.showScreen("online-home");
+          var e = document.getElementById("online-error");
+          if (e) { e.textContent = "Couldn’t join — the game may have ended."; e.className = "hint error"; }
+        }
+      }
+    );
+  };
+
   function wire() {
     document.querySelectorAll("#online-type [data-type]").forEach(function (b) {
       b.onclick = function () {
