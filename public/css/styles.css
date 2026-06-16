@@ -382,6 +382,47 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 .hrow.out { color: var(--bad); }
 .hrow.win { color: var(--good); font-weight: 800; }
 
+/* round recap — "names you could have said" */
+.missed {
+  background: var(--panel); backdrop-filter: blur(12px); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 14px 16px; margin: 0 0 14px;
+}
+.missed h3 { margin: 0 0 10px; font-size: 14px; font-weight: 700; }
+.missed-letter { color: var(--accent-2); font-weight: 800; }
+.missed-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.missed-chip {
+  font-size: 13px; font-weight: 700; padding: 7px 12px; border-radius: 999px;
+  background: var(--panel-2); border: 1px solid var(--line-strong); color: var(--text);
+}
+
+/* expanded statistics grid */
+.stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; }
+@media (max-width: 420px) { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+
+/* most-played player highlight */
+.mvp { text-align: center; border-color: var(--accent); background: var(--panel-2); box-shadow: 0 6px 22px rgba(255,106,26,0.16); }
+.mvp-label { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 700; }
+.mvp-name { font-family: "Outfit", sans-serif; font-weight: 800; font-size: 24px; margin: 4px 0 2px;
+  background: linear-gradient(120deg, var(--accent-2), var(--accent)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.mvp-count { font-size: 13px; color: var(--muted); }
+
+/* friends */
+.friend-search { margin-bottom: 10px; }
+.friend-results { display: flex; flex-direction: column; gap: 8px; }
+.friend-results:not(:empty) { margin-bottom: 12px; }
+.friend-list { display: flex; flex-direction: column; gap: 8px; }
+.friend-row {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(8,11,19,0.5); border: 1px solid var(--line);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+}
+.friend-row.res { border-style: dashed; }
+.fr-main { flex: 1; min-width: 0; }
+.fr-name { font-weight: 800; font-size: 15px; }
+.fr-stat { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.fr-added { font-size: 13px; font-weight: 700; color: var(--good); }
+.primary-btn.sm, .ghost-btn.sm { width: auto; padding: 8px 14px; font-size: 13px; flex-shrink: 0; margin: 0; }
+
 /* no-timer banner */
 .no-timer { margin: 16px 0 2px; font-size: 13px; color: var(--muted); font-weight: 600; padding: 10px; background: rgba(8,11,19,0.5); border: 1px solid var(--line); border-radius: var(--radius-sm); }
 

@@ -30,13 +30,24 @@
     { id: "win10", icon: "🏆", title: "Contender", desc: "Win 10 online matches", test: function (s) { return (s.mpMatchWins || 0) >= 10; } },
     { id: "win50", icon: "👑", title: "Champion", desc: "Win 50 online matches", test: function (s) { return (s.mpMatchWins || 0) >= 50; } },
     { id: "rounds25", icon: "🎯", title: "Round Hunter", desc: "Win 25 online rounds", test: function (s) { return (s.mpRoundWins || 0) >= 25; } },
+    { id: "rounds100", icon: "🏹", title: "Round Machine", desc: "Win 100 online rounds", test: function (s) { return (s.mpRoundWins || 0) >= 100; } },
+    { id: "chain50", icon: "⛓️", title: "Chain Legend", desc: "50-link daily chain", test: function (s) { return (s.bestChain || 0) >= 50; } },
+    { id: "names100", icon: "📣", title: "Name Dropper", desc: "Say 100 names", test: function (s) { return (s.namesSaid || 0) >= 100; } },
+    { id: "names500", icon: "📚", title: "Encyclopedia", desc: "Say 500 names", test: function (s) { return (s.namesSaid || 0) >= 500; } },
+    { id: "names2000", icon: "🧠", title: "Walking Almanac", desc: "Say 2,000 names", test: function (s) { return (s.namesSaid || 0) >= 2000; } },
     { id: "buzzer", icon: "⚡", title: "Buzzer Beater", desc: "Answer with under 2s left", test: function (s) { return !!(s.feats && s.feats.buzzer); } },
     { id: "flawless", icon: "🛡️", title: "Flawless", desc: "Win a match losing no rounds", test: function (s) { return !!(s.feats && s.feats.flawless); } },
     { id: "specialist", icon: "🎓", title: "Specialist", desc: "Win a single-league match", test: function (s) { return !!(s.feats && s.feats.specialist); } },
+    { id: "friend1", icon: "🤝", title: "Squad Up", desc: "Add your first friend", test: function (s) { return (s.friends || 0) >= 1; } },
+    { id: "friend5", icon: "🌐", title: "Well Connected", desc: "Add 5 friends", test: function (s) { return (s.friends || 0) >= 5; } },
+    { id: "loyal", icon: "💞", title: "Ride or Die", desc: "Say one player 15 times", test: function (s) { return topPlayerCount(s) >= 15; } },
   ];
 
   function evaluate() {
     var s = load();
+    // keep an all-time best streak even after a current streak resets
+    var bs = Math.max(s.bestStreak || 0, s.streak || 0);
+    if (bs !== (s.bestStreak || 0)) { s.bestStreak = bs; try { localStorage.setItem(STATS_KEY, JSON.stringify(s)); } catch (e) {} }
     var have = {};
     (s.achievements || []).forEach(function (id) { have[id] = true; });
     var newly = [];
@@ -67,6 +78,22 @@
     var s = load(); s.feats = s.feats || {};
     if (!s.feats[name]) { s.feats[name] = true; save(s); evaluate(); }
   }
+  // Count every accepted athlete name + tally it per-player for "most-played".
+  var nameT = null;
+  function recordName(name) {
+    var s = load();
+    s.namesSaid = (s.namesSaid || 0) + 1;
+    if (name) { s.players = s.players || {}; s.players[name] = (s.players[name] || 0) + 1; }
+    save(s);
+    clearTimeout(nameT); nameT = setTimeout(evaluate, 800); // batch achievement checks
+  }
+  function topPlayer(s) {
+    var p = s.players, best = null, bc = 0;
+    if (!p) return null;
+    for (var k in p) if (p[k] > bc) { bc = p[k]; best = k; }
+    return best ? { name: best, count: bc } : null;
+  }
+  function topPlayerCount(s) { var t = topPlayer(s); return t ? t.count : 0; }
 
   /* ---------------- cloud sync ---------------- */
   var pushT = null;
@@ -90,6 +117,13 @@
     s.runs = Math.max(s.runs || 0, cloud.runs || 0);
     s.mpMatchWins = Math.max(s.mpMatchWins || 0, cloud.mpMatchWins || 0);
     s.mpRoundWins = Math.max(s.mpRoundWins || 0, cloud.mpRoundWins || 0);
+    s.namesSaid = Math.max(s.namesSaid || 0, cloud.namesSaid || 0);
+    s.bestStreak = Math.max(s.bestStreak || 0, cloud.bestStreak || 0, s.streak || 0);
+    s.friends = Math.max(s.friends || 0, cloud.friends || 0);
+    if (cloud.players) {
+      s.players = s.players || {};
+      for (var pk in cloud.players) s.players[pk] = Math.max(s.players[pk] || 0, cloud.players[pk]);
+    }
     if (cloud.lastPlayed && (!s.lastPlayed || cloud.lastPlayed > s.lastPlayed)) {
       s.lastPlayed = cloud.lastPlayed; s.todayDate = cloud.todayDate; s.todayScore = cloud.todayScore;
     }
@@ -128,6 +162,7 @@
         profile = r.data;
         mergeIntoLocal(r.data.stats || {}, r.data.achievements || []);
         evaluate(); pushNow();
+        loadFriends(function () { if (open) renderAccount(); });
         if (open) renderAccount();
       } else {
         var pending = localStorage.getItem("ng-pending-username") || (u.email ? u.email.split("@")[0] : "player");
@@ -166,7 +201,115 @@
   function signOut() {
     if (DB) DB.auth.signOut();
     session = null; profile = null;
+    friends = []; friendsLoaded = false;
     if (open) renderAccount();
+  }
+
+  /* ---------------- friends ---------------- */
+  var friends = [];          // [{ id, username, stats, achievements }]
+  var friendsLoaded = false;
+  var searchT = null;
+
+  function setFriendCount(n) {
+    var s = load();
+    if ((s.friends || 0) !== n) { s.friends = n; save(s); evaluate(); }
+  }
+  function loadFriends(cb) {
+    if (!DB || !session) { friends = []; return cb && cb(); }
+    DB.from("friends").select("friend_id").eq("user_id", session.user.id).then(function (r) {
+      var ids = (r.data || []).map(function (x) { return x.friend_id; });
+      friendsLoaded = true;
+      if (!ids.length) { friends = []; setFriendCount(0); return cb && cb(); }
+      DB.from("profiles").select("id,username,stats,achievements").in("id", ids).then(function (p) {
+        friends = p.data || [];
+        setFriendCount(friends.length);
+        cb && cb();
+      });
+    });
+  }
+  function addFriend(id, cb) {
+    if (!DB || !session) return cb && cb({ ok: false });
+    DB.from("friends").insert({ user_id: session.user.id, friend_id: id })
+      .then(function (r) { cb && cb({ ok: !r.error, error: r.error }); });
+  }
+  function removeFriend(id, cb) {
+    if (!DB || !session) return cb && cb({ ok: false });
+    DB.from("friends").delete().eq("user_id", session.user.id).eq("friend_id", id)
+      .then(function (r) { cb && cb({ ok: !r.error }); });
+  }
+  function searchUsers(q, cb) {
+    q = (q || "").trim();
+    if (!DB || !session || q.length < 2) return cb([]);
+    DB.from("profiles").select("id,username,stats,achievements")
+      .ilike("username", "%" + q + "%").neq("id", session.user.id).limit(12)
+      .then(function (r) { cb(r && !r.error ? (r.data || []) : []); });
+  }
+
+  function friendStatLine(p) {
+    var st = p.stats || {};
+    return "🔗 " + (st.bestChain || 0) + " · 🏆 " + (st.mpMatchWins || 0) + " · " + ((p.achievements || []).length) + " badges";
+  }
+  function friendsPanel() {
+    return (
+      '<div class="panel"><h3>Friends</h3>' +
+      '<div class="friend-search"><input type="text" id="fr-q" placeholder="Search a username to add…" autocomplete="off" maxlength="20" /></div>' +
+      '<div id="fr-results" class="friend-results"></div>' +
+      '<div id="fr-list" class="friend-list"></div>' +
+      "</div>"
+    );
+  }
+  function renderFriendList() {
+    var el = document.getElementById("fr-list");
+    if (!el) return;
+    if (!friends.length) { el.innerHTML = '<p class="hint">No friends yet — search a username above to add one.</p>'; return; }
+    el.innerHTML = friends.map(function (p) {
+      return '<div class="friend-row"><div class="fr-main"><div class="fr-name">@' + esc(p.username) +
+        '</div><div class="fr-stat">' + friendStatLine(p) + '</div></div>' +
+        '<button class="ghost-btn sm" data-rm="' + esc(p.id) + '">Remove</button></div>';
+    }).join("");
+    Array.prototype.forEach.call(el.querySelectorAll("[data-rm]"), function (b) {
+      b.onclick = function () {
+        removeFriend(b.getAttribute("data-rm"), function () {
+          loadFriends(function () { renderFriendList(); reSearch(); });
+        });
+      };
+    });
+  }
+  function renderFriendResults(arr) {
+    var el = document.getElementById("fr-results");
+    if (!el) return;
+    var have = {}; friends.forEach(function (f) { have[f.id] = true; });
+    if (!arr.length) { el.innerHTML = ""; return; }
+    el.innerHTML = arr.map(function (p) {
+      var added = have[p.id];
+      return '<div class="friend-row res"><div class="fr-main"><div class="fr-name">@' + esc(p.username) +
+        '</div><div class="fr-stat">' + friendStatLine(p) + '</div></div>' +
+        (added ? '<span class="fr-added">✓ Added</span>'
+               : '<button class="primary-btn sm" data-add="' + esc(p.id) + '">Add</button>') + "</div>";
+    }).join("");
+    Array.prototype.forEach.call(el.querySelectorAll("[data-add]"), function (b) {
+      b.onclick = function () {
+        b.disabled = true;
+        addFriend(b.getAttribute("data-add"), function (r) {
+          if (r.ok) loadFriends(function () { renderFriendList(); reSearch(); });
+          else b.disabled = false;
+        });
+      };
+    });
+  }
+  function doSearch(q) {
+    clearTimeout(searchT);
+    searchT = setTimeout(function () { searchUsers(q, renderFriendResults); }, 250);
+  }
+  function reSearch() {
+    var q = document.getElementById("fr-q");
+    if (q && q.value.trim().length >= 2) searchUsers(q.value, renderFriendResults);
+  }
+  function wireFriends() {
+    var q = document.getElementById("fr-q");
+    if (q) q.addEventListener("input", function () { doSearch(q.value); });
+    if (friendsLoaded) renderFriendList();
+    else loadFriends(function () { renderFriendList(); });
   }
 
   /* ---------------- UI ---------------- */
@@ -197,14 +340,32 @@
     );
   }
 
+  function statBox(n, l) {
+    return '<div class="stat"><div class="stat-n">' + n + '</div><div class="stat-l">' + l + "</div></div>";
+  }
+  function mostPlayedHtml() {
+    var t = topPlayer(load());
+    if (!t) return "";
+    return (
+      '<div class="panel mvp"><div class="mvp-label">⭐ Most-played player</div>' +
+      '<div class="mvp-name">' + esc(t.name) + "</div>" +
+      '<div class="mvp-count">said ' + t.count + (t.count === 1 ? " time" : " times") + "</div></div>" +
+      '<div style="height:12px"></div>'
+    );
+  }
   function statsPanel() {
     var s = load();
     return (
-      '<div class="stat-row">' +
-      '<div class="stat"><div class="stat-n">' + (s.bestChain || 0) + '</div><div class="stat-l">Best chain</div></div>' +
-      '<div class="stat"><div class="stat-n">' + (s.streak || 0) + '</div><div class="stat-l">Day streak</div></div>' +
-      '<div class="stat"><div class="stat-n">' + (s.mpMatchWins || 0) + '</div><div class="stat-l">Match wins</div></div>' +
-      "</div>"
+      '<div class="panel"><h3>Statistics</h3><div class="stat-grid">' +
+      statBox(s.bestChain || 0, "Best chain") +
+      statBox(s.streak || 0, "Day streak") +
+      statBox(s.bestStreak || s.streak || 0, "Best streak") +
+      statBox(s.mpMatchWins || 0, "Match wins") +
+      statBox(s.mpRoundWins || 0, "Round wins") +
+      statBox(s.namesSaid || 0, "Names said") +
+      statBox(s.runs || 0, "Daily runs") +
+      statBox((s.achievements || []).length, "Badges") +
+      "</div></div>"
     );
   }
 
@@ -217,10 +378,13 @@
         '<div class="turn-player you">Signed in</div>' +
         '<div class="turn-name">@' + esc(profile.username) + "</div>" +
         '<p class="hint" style="margin:6px 0 0">Your progress syncs to the cloud. ☁️</p></div>' +
+        mostPlayedHtml() +
         statsPanel() + '<div style="height:12px"></div>' +
+        friendsPanel() + '<div style="height:12px"></div>' +
         achGrid() +
         '<button class="ghost-btn" id="acc-signout">Sign out</button>';
       document.getElementById("acc-signout").onclick = signOut;
+      wireFriends();
       return;
     }
     if (confirmEmail) {
@@ -306,6 +470,7 @@
     recordRoundWin: recordRoundWin,
     recordMatchWin: recordMatchWin,
     recordFeat: recordFeat,
+    recordName: recordName,
     evaluate: evaluate,
     isLoggedIn: function () { return !!session; },
     label: label,

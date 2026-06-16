@@ -276,6 +276,7 @@
               if (window.FX) { FX.bad(); FX.shake(document.querySelector("#online-room .turn-card")); }
             } else {
               if (window.FX) FX.good();
+              if (window.NameGameAccount) NameGameAccount.recordName(res && res.athlete ? res.athlete.name : null);
               if (hadDeadline && hadDeadline - Date.now() < 2000 && window.NameGameAccount) {
                 NameGameAccount.recordFeat("buzzer");
               }
@@ -320,6 +321,7 @@
       (rwName ? esc(rwName) + " takes round " + room.round : "Round over") +
       '</h2><p class="hint">First to ' + room.settings.target +
       " wins · next round starts automatically…</p></div>" +
+      App.missedHtml(room.lastOut) +
       App.scoreboardHtml(scoreRows(room), room.settings.target) +
       '<div style="height:14px"></div>' +
       (isHost()
@@ -413,6 +415,7 @@
       '<div class="winner-banner"><div class="trophy">🏆</div><h2>' +
       (wName ? esc(wName) + " wins the match!" : "Game over") +
       '</h2><p class="hint">Final standings</p></div>' +
+      App.missedHtml(room.lastOut) +
       App.scoreboardHtml(scoreRows(room), room.settings.target) +
       '<div style="height:14px"></div>' +
       (isHost()

@@ -218,6 +218,46 @@
     };
   }
 
+  /*
+   * suggest — a few VALID names the player could have said.
+   * ctx: { index, settings, usedKeys, requiredLetter }. Returns up to `n` real
+   * player names that fit the required letter, the league/era filters, and
+   * haven't been used yet. Iterates from a random offset so the picks vary.
+   */
+  function suggest(ctx, n) {
+    n = n || 6;
+    var index = ctx.index;
+    if (!index.__keys) {
+      Object.defineProperty(index, "__keys", { value: Object.keys(index), enumerable: false, configurable: true });
+    }
+    var keys = index.__keys;
+    var req = (ctx.requiredLetter || "").toUpperCase();
+    var used = ctx.usedKeys;
+    var isUsed = function (k) { return used && (used.has ? used.has(k) : used.indexOf(k) !== -1); };
+    // Reservoir sample so the picks are spread across the whole DB, not a
+    // cluster of alphabetically-adjacent names. One O(keys) pass, deduped.
+    var res = [], inRes = {}, count = 0;
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (isUsed(k)) continue;
+      var arr = index[k], name = null;
+      for (var j = 0; j < arr.length; j++) {
+        var a = arr[j];
+        if (!eligible(a, ctx.settings)) continue;
+        if (req && firstLetterOfFirstName(a.name) !== req) continue;
+        name = a.name; break;
+      }
+      if (!name || inRes[name]) continue;
+      count++;
+      if (res.length < n) { res.push(name); inRes[name] = true; }
+      else {
+        var r = Math.floor(Math.random() * count);
+        if (r < n) { inRes[res[r]] = false; res[r] = name; inRes[name] = true; }
+      }
+    }
+    return res;
+  }
+
   return {
     normalize: normalize,
     firstName: firstName,
@@ -227,6 +267,7 @@
     buildIndex: buildIndex,
     eligible: eligible,
     validate: validate,
+    suggest: suggest,
     ALIASES: ALIASES,
   };
 });

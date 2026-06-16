@@ -275,6 +275,7 @@
     s.lastRejected = null;
     s.paused = false;
     s.challenge = null;
+    s.lastOut = null;
     s.turn = (s.round - 1) % s.players.length;
     beginTurn();
   }
@@ -331,10 +332,25 @@
     beginTurn();
   }
 
+  // A few real names the current player could have said (for the round recap).
+  function suggestPP() {
+    var s = PP.state;
+    if (!App.index) return [];
+    return NameGameRules.suggest({
+      index: App.index, settings: PP.settings,
+      usedKeys: s.used, requiredLetter: s.requiredLetter,
+    }, 6);
+  }
+  function recordOutPP(p) {
+    var s = PP.state;
+    s.lastOut = { player: p.name, letter: s.requiredLetter, missed: suggestPP() };
+  }
+
   function timeoutPP() {
     var s = PP.state;
     var p = s.players[s.turn];
     p.alive = false;
+    recordOutPP(p);
     s.history.unshift({ type: "out", player: p.name, reason: "ran out of time" });
     advanceTurn();
   }
@@ -344,6 +360,7 @@
     if (s.tick) { clearInterval(s.tick); s.tick = null; }
     var p = s.players[s.turn];
     p.alive = false;
+    recordOutPP(p);
     s.history.unshift({ type: "out", player: p.name, reason: "gave up" });
     advanceTurn();
   }
@@ -453,6 +470,7 @@
       return;
     }
     if (window.FX) FX.good();
+    if (window.NameGameAccount) NameGameAccount.recordName(res.athlete.name);
     s.used.add(res.key);
     s.turnsStack.push({ playerIndex: s.turn, key: res.key, prevRequiredLetter: s.requiredLetter, name: res.athlete.name, league: res.athlete.league, nextLetter: res.nextLetter });
     s.requiredLetter = res.nextLetter;
@@ -560,6 +578,7 @@
       '<div class="winner-banner round"><div class="trophy">🎉</div><h2>' +
       (winner.name ? esc(winner.name) + " takes round " + s.round : "Round over") +
       "</h2><p class=\"hint\">First to " + s.target + " wins the match.</p></div>" +
+      missedHtml(s.lastOut) +
       scoreboardHtml(ppRows(), s.target) +
       '<div style="height:14px"></div>' +
       '<button class="primary-btn big" id="pp-next">Next round →</button>';
@@ -573,11 +592,25 @@
       '<div class="winner-banner"><div class="trophy">🏆</div><h2>' +
       (winner.name ? esc(winner.name) : "Game over") + " wins the match!</h2>" +
       "<p class=\"hint\">Final standings</p></div>" +
+      missedHtml(s.lastOut) +
       scoreboardHtml(ppRows(), s.target) +
       '<div style="height:14px"></div>' +
       '<button class="primary-btn big" id="pp-newmatch">New match</button>';
     document.getElementById("pp-newmatch").onclick = startMatchPP;
   }
+
+  // "Names you could have said" recap panel. out: { player, letter, missed }.
+  function missedHtml(out) {
+    if (!out || !out.missed || !out.missed.length) return "";
+    return (
+      '<div class="missed"><h3>💡 ' + esc(out.player) + " could have said" +
+      (out.letter ? ' <span class="missed-letter">' + esc(out.letter) + "…</span>" : "") +
+      "</h3><div class=\"missed-chips\">" +
+      out.missed.map(function (nm) { return '<span class="missed-chip">' + esc(nm) + "</span>"; }).join("") +
+      "</div></div>"
+    );
+  }
+  App.missedHtml = missedHtml;
 
   /* shared render helpers also used by online.js */
   function strip(players, currentIdx) {

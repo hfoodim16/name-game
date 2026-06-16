@@ -78,6 +78,7 @@ function publicRoom(room) {
     round: room.round,
     roundWinnerId: room.roundWinnerId,
     roundWinnerTeam: room.roundWinnerTeam,
+    lastOut: room.lastOut || null,
     winnerId: room.winnerId,
     winnerTeam: room.winnerTeam,
     lastError: null,
@@ -196,6 +197,17 @@ function eliminate(room, playerId, reason) {
   if (p && p.alive) {
     p.alive = false;
     room.history.push({ type: "out", player: p.name, reason });
+    // Recap: real names this player could have said (athlete games only).
+    if (room.gameType !== "custom") {
+      room.lastOut = {
+        player: p.name,
+        letter: room.requiredLetter,
+        missed: Rules.suggest({
+          index: fullIndex, settings: room.settings,
+          usedKeys: room.usedKeys, requiredLetter: room.requiredLetter,
+        }, 6),
+      };
+    }
   }
   const alive = alivePlayers(room);
   if (roundIsOver(room)) return endRound(room);
@@ -265,6 +277,7 @@ function startRound(room) {
   room.pauseRemaining = 0;
   room.roundWinnerId = null;
   room.roundWinnerTeam = -1;
+  room.lastOut = null;
   room.round = (room.round || 0) + 1;
   room.order = shuffle(room.players.map((p) => p.id));
   room.turnIndex = -1;
