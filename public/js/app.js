@@ -588,8 +588,10 @@
       if (wIdx >= 0) s.scores[wIdx]++;
       winner = { name: wIdx >= 0 ? s.players[wIdx].name : null, score: wIdx >= 0 ? s.scores[wIdx] : 0 };
     }
-    if (winner.score >= s.target) renderMatchOverPP(winner);
-    else renderRoundOverPP(winner);
+    if (winner.score >= s.target) {
+      if (window.NameGameAccount) NameGameAccount.recordPPMatchWin();
+      renderMatchOverPP(winner);
+    } else renderRoundOverPP(winner);
   }
 
   function ppRows() {
@@ -622,8 +624,15 @@
       missedHtml(s.lastOut) +
       scoreboardHtml(ppRows(), s.target) +
       '<div style="height:14px"></div>' +
-      '<button class="primary-btn big" id="pp-newmatch">New match</button>';
+      '<button class="primary-btn big" id="pp-newmatch">New match</button>' +
+      '<div style="height:8px"></div>' +
+      '<button class="ghost-btn big" id="pp-changesettings">Change players / settings</button>';
     document.getElementById("pp-newmatch").onclick = startMatchPP;
+    document.getElementById("pp-changesettings").onclick = function () {
+      PP.state = null;
+      initPassPhoneSetup();
+      showScreen("passphone-setup");
+    };
   }
 
   // "Names you could have said" recap panel. out: { player, letter, missed }.
@@ -773,7 +782,15 @@
     document.querySelectorAll("[data-go]").forEach(function (el) {
       el.addEventListener("click", function () {
         var dest = el.getAttribute("data-go");
-        if (dest === "passphone-setup") initPassPhoneSetup();
+        if (dest === "passphone-setup") {
+          // Confirm before quitting an active game (the Quit button in the game screen).
+          if (PP.state && PP.state.round > 0) {
+            if (!window.confirm("Quit and lose your current game?")) return;
+            if (PP.state.tick) { clearInterval(PP.state.tick); PP.state.tick = null; }
+            PP.state = null;
+          }
+          initPassPhoneSetup();
+        }
         if (dest === "daily" && window.NameGameDaily) window.NameGameDaily.open();
         if (dest === "custom-setup" && window.NameGameCustom) window.NameGameCustom.openSetup();
         if (dest === "account" && window.NameGameAccount) window.NameGameAccount.open();

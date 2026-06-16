@@ -195,11 +195,17 @@ function startTurn(room) {
   beginTurnAt(room);
 }
 
+// Keep history bounded so room:update payloads don't grow unboundedly on long games.
+function pushHistory(room, entry) {
+  room.history.push(entry);
+  if (room.history.length > 50) room.history.shift();
+}
+
 function eliminate(room, playerId, reason) {
   const p = room.players.find((x) => x.id === playerId);
   if (p && p.alive) {
     p.alive = false;
-    room.history.push({ type: "out", player: p.name, reason });
+    pushHistory(room, { type: "out", player: p.name, reason });
     // Recap: real names this player could have said (athlete games only).
     if (room.gameType !== "custom") {
       room.lastOut = {
@@ -233,7 +239,7 @@ function endRound(room) {
     room.roundWinnerId = null;
     if (wTeam >= 0) {
       room.teamScores[wTeam] = (room.teamScores[wTeam] || 0) + 1;
-      room.history.push({ type: "roundwin", player: "Team " + TEAM_LETTER[wTeam], score: room.teamScores[wTeam] });
+      pushHistory(room, { type: "roundwin", player: "Team " + TEAM_LETTER[wTeam], score: room.teamScores[wTeam] });
     }
     if (wTeam >= 0 && room.teamScores[wTeam] >= room.settings.target) {
       room.status = "ended"; room.winnerTeam = wTeam; room.winnerId = null; broadcast(room);
@@ -251,7 +257,7 @@ function endRound(room) {
   const w = room.players.find((p) => p.id === winnerId);
   if (winnerId) {
     room.scores[winnerId] = (room.scores[winnerId] || 0) + 1;
-    if (w) room.history.push({ type: "roundwin", player: w.name, score: room.scores[winnerId] });
+    if (w) pushHistory(room, { type: "roundwin", player: w.name, score: room.scores[winnerId] });
   }
   if (winnerId && room.scores[winnerId] >= room.settings.target) {
     room.status = "ended";
@@ -536,7 +542,7 @@ io.on("connection", (socket) => {
     });
     room.requiredLetter = result.nextLetter;
     room.lastRejected = null;
-    room.history.push({
+    pushHistory(room, {
       type: "said",
       player: p ? p.name : "?",
       name: result.athlete.name,
@@ -559,7 +565,7 @@ io.on("connection", (socket) => {
     if (counts) {
       room.usedKeys.add(d.key);
       if (room.settings.letterRule) room.requiredLetter = d.nextLetter;
-      room.history.push({ type: "said", player: d.byName, name: d.word });
+      pushHistory(room, { type: "said", player: d.byName, name: d.word });
       startTurn(room); // accepted -> next player, fresh clock
     } else {
       resumeAfterDecide(room); // rejected -> same player goes again
@@ -627,7 +633,7 @@ io.on("connection", (socket) => {
         playerId: room.lastRejected.playerId, key,
         prevRequiredLetter: room.requiredLetter, name: guess, league: "allowed", nextLetter: nextL,
       });
-      room.history.push({ type: "said", player: author ? author.name : "?", name: guess, league: "allowed", nextLetter: nextL });
+      pushHistory(room, { type: "said", player: author ? author.name : "?", name: guess, league: "allowed", nextLetter: nextL });
       room.requiredLetter = nextL;
       room.lastRejected = null;
       // the rejected guess was the current player's, so just advance.

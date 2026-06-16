@@ -41,6 +41,8 @@
     { id: "friend1", icon: "🤝", title: "Squad Up", desc: "Add your first friend", test: function (s) { return (s.friends || 0) >= 1; } },
     { id: "friend5", icon: "🌐", title: "Well Connected", desc: "Add 5 friends", test: function (s) { return (s.friends || 0) >= 5; } },
     { id: "loyal", icon: "💞", title: "Ride or Die", desc: "Say one player 15 times", test: function (s) { return topPlayerCount(s) >= 15; } },
+    { id: "ppwin1", icon: "📱", title: "House Champion", desc: "Win a Pass & Play match", test: function (s) { return (s.ppMatchWins || 0) >= 1; } },
+    { id: "ppwin10", icon: "🎮", title: "Party Dominator", desc: "Win 10 Pass & Play matches", test: function (s) { return (s.ppMatchWins || 0) >= 10; } },
   ];
 
   function evaluate() {
@@ -77,6 +79,11 @@
   function recordFeat(name) {
     var s = load(); s.feats = s.feats || {};
     if (!s.feats[name]) { s.feats[name] = true; save(s); evaluate(); }
+  }
+  function recordPPMatchWin() {
+    var s = load();
+    s.ppMatchWins = (s.ppMatchWins || 0) + 1;
+    save(s); evaluate();
   }
   // Count every accepted athlete name + tally it per-player for "most-played".
   var nameT = null;
@@ -443,10 +450,10 @@
       statBox(s.bestChain || 0, "Best chain") +
       statBox(s.streak || 0, "Day streak") +
       statBox(s.bestStreak || s.streak || 0, "Best streak") +
-      statBox(s.mpMatchWins || 0, "Match wins") +
+      statBox(s.mpMatchWins || 0, "Online wins") +
+      statBox(s.ppMatchWins || 0, "P&P wins") +
       statBox(s.mpRoundWins || 0, "Round wins") +
       statBox(s.namesSaid || 0, "Names said") +
-      statBox(s.runs || 0, "Daily runs") +
       statBox(badgeCount, "Badges") +
       "</div></div>"
     );
@@ -553,6 +560,7 @@
     fetchLeaderboard: fetchLeaderboard,
     recordRoundWin: recordRoundWin,
     recordMatchWin: recordMatchWin,
+    recordPPMatchWin: recordPPMatchWin,
     recordFeat: recordFeat,
     recordName: recordName,
     evaluate: evaluate,
