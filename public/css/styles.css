@@ -526,7 +526,7 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 /* modal */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(4,6,12,0.72); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 70; animation: screen-in 0.25s var(--ease); }
 .modal-backdrop[hidden] { display: none; }
-.modal { background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 26px; max-width: 440px; box-shadow: var(--shadow); animation: win-in 0.35s var(--ease); }
+.modal { background: var(--panel-solid); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 26px; max-width: 440px; width: 100%; box-shadow: var(--shadow); animation: win-in 0.35s var(--ease); max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .modal h3 { margin-top: 0; font-size: 21px; }
 .modal ol, .modal ul { line-height: 1.65; color: var(--text); padding-left: 20px; margin: 0 0 4px; }
 .modal li { margin-bottom: 9px; }
