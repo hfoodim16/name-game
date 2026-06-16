@@ -14,6 +14,7 @@ const Rules = require("./public/js/rules.js");
 
 const PORT = process.env.PORT || 3000;
 const TURN_SECONDS = 30;
+const RECONNECT_GRACE_MS = 60000; // how long a dropped player keeps their seat
 
 const athletes = JSON.parse(
   fs.readFileSync(path.join(__dirname, "data", "athletes.json"), "utf8")
@@ -63,7 +64,9 @@ function publicRoom(room) {
       alive: p.alive,
       team: p.team,
       isHost: p.id === room.hostId,
+      disconnected: !!p.disconnected,
     })),
+    spectators: room.spectators ? room.spectators.size : 0,
     currentPlayerId: room.order[room.turnIndex] || null,
     requiredLetter: room.requiredLetter,
     history: room.history,
@@ -330,11 +333,45 @@ function resetRoom(room) {
   if (room.nextTimer) { clearTimeout(room.nextTimer); room.nextTimer = null; }
 }
 
+// Rewrite every place a socket id is used as a player's identity, so a
+// reconnecting player (new socket) keeps their slot, turn, and score.
+function remapId(room, oldId, newId) {
+  room.players.forEach((p) => { if (p.id === oldId) p.id = newId; });
+  room.order = room.order.map((id) => (id === oldId ? newId : id));
+  if (room.hostId === oldId) room.hostId = newId;
+  if (room.roundWinnerId === oldId) room.roundWinnerId = newId;
+  if (room.winnerId === oldId) room.winnerId = newId;
+  if (room.scores && room.scores[oldId] != null) { room.scores[newId] = room.scores[oldId]; delete room.scores[oldId]; }
+  (room.turnsStack || []).forEach((t) => { if (t.playerId === oldId) t.playerId = newId; });
+  if (room.decide && room.decide.byId === oldId) room.decide.byId = newId;
+  if (room.lastRejected && room.lastRejected.playerId === oldId) room.lastRejected.playerId = newId;
+}
+
+// Actually remove a player (called when their reconnect grace period expires).
+function dropPlayer(room, playerId) {
+  const wasCurrent = room.order[room.turnIndex] === playerId;
+  room.players = room.players.filter((p) => p.id !== playerId);
+  if (room.players.length === 0) {
+    clearTimer(room);
+    if (room.nextTimer) clearTimeout(room.nextTimer);
+    rooms.delete(room.code);
+    return;
+  }
+  if (room.hostId === playerId) room.hostId = room.players[0].id;
+  if (room.status === "playing") {
+    if (roundIsOver(room)) endRound(room);
+    else if (wasCurrent) startTurn(room);
+    else broadcast(room);
+  } else {
+    broadcast(room);
+  }
+}
+
 /* --------------------------------------------------------------- sockets */
 io.on("connection", (socket) => {
   let joinedCode = null;
 
-  socket.on("room:create", ({ name, gameType, settings }, cb) => {
+  socket.on("room:create", ({ name, gameType, settings, clientId }, cb) => {
     const code = makeCode();
     const type = gameType === "custom" ? "custom" : "athlete";
     const room = {
@@ -343,7 +380,8 @@ io.on("connection", (socket) => {
       gameType: type,
       settings: sanitizeSettings(type, settings),
       decide: null,
-      players: [{ id: socket.id, name: cleanName(name), alive: true }],
+      players: [{ id: socket.id, clientId: clientId || socket.id, name: cleanName(name), alive: true }],
+      spectators: new Set(),
       status: "lobby",
       order: [],
       turnIndex: -1,
@@ -374,18 +412,46 @@ io.on("connection", (socket) => {
     broadcast(room);
   });
 
-  socket.on("room:join", ({ code, name }, cb) => {
+  socket.on("room:join", ({ code, name, clientId }, cb) => {
     code = (code || "").toUpperCase().trim();
     const room = rooms.get(code);
     if (!room) return cb && cb({ ok: false, message: "No room with that code." });
     if (room.status !== "lobby")
-      return cb && cb({ ok: false, message: "That game has already started." });
+      return cb && cb({ ok: false, message: "That game has already started.", canSpectate: true });
     if (room.players.length >= 12)
-      return cb && cb({ ok: false, message: "Room is full." });
-    room.players.push({ id: socket.id, name: cleanName(name), alive: true });
+      return cb && cb({ ok: false, message: "Room is full.", canSpectate: true });
+    room.players.push({ id: socket.id, clientId: clientId || socket.id, name: cleanName(name), alive: true });
     socket.join(code);
     joinedCode = code;
     cb && cb({ ok: true, code, room: publicRoom(room) });
+    broadcast(room);
+  });
+
+  // Rejoin a room you were dropped from (phone lock, refresh, signal loss).
+  socket.on("room:rejoin", ({ code, clientId }, cb) => {
+    code = (code || "").toUpperCase().trim();
+    const room = rooms.get(code);
+    if (!room) return cb && cb({ ok: false, message: "That game is no longer available." });
+    const p = room.players.find((x) => x.clientId && x.clientId === clientId);
+    if (!p) return cb && cb({ ok: false, message: "Couldn’t find your spot in that game.", canSpectate: true });
+    if (p.dcTimer) { clearTimeout(p.dcTimer); p.dcTimer = null; }
+    remapId(room, p.id, socket.id);
+    p.disconnected = false;
+    socket.join(code);
+    joinedCode = code;
+    cb && cb({ ok: true, code, room: publicRoom(room) });
+    broadcast(room);
+  });
+
+  // Watch a game already in progress, without taking a seat.
+  socket.on("room:spectate", ({ code }, cb) => {
+    code = (code || "").toUpperCase().trim();
+    const room = rooms.get(code);
+    if (!room) return cb && cb({ ok: false, message: "No room with that code." });
+    room.spectators.add(socket.id);
+    socket.join(code);
+    joinedCode = code;
+    cb && cb({ ok: true, code, room: publicRoom(room), spectator: true });
     broadcast(room);
   });
 
@@ -607,25 +673,25 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     const room = rooms.get(joinedCode);
     if (!room) return;
-    const wasCurrent = room.order[room.turnIndex] === socket.id;
-    room.players = room.players.filter((p) => p.id !== socket.id);
-
-    if (room.players.length === 0) {
-      clearTimer(room);
-      if (room.nextTimer) clearTimeout(room.nextTimer);
-      rooms.delete(room.code);
+    // Spectators just leave.
+    if (room.spectators && room.spectators.has(socket.id)) {
+      room.spectators.delete(socket.id);
+      broadcast(room);
       return;
     }
-    if (room.hostId === socket.id) room.hostId = room.players[0].id;
-
-    if (room.status === "playing") {
-      const alive = alivePlayers(room);
-      if (roundIsOver(room)) endRound(room);
-      else if (wasCurrent) startTurn(room);
-      else broadcast(room);
-    } else {
-      broadcast(room);
-    }
+    const p = room.players.find((x) => x.id === socket.id);
+    if (!p) return;
+    // Give the player a grace window to reconnect before we remove them.
+    p.disconnected = true;
+    if (p.dcTimer) clearTimeout(p.dcTimer);
+    const dropId = socket.id;
+    p.dcTimer = setTimeout(() => {
+      const r = rooms.get(joinedCode);
+      if (!r) return;
+      const still = r.players.find((x) => x.id === dropId && x.disconnected);
+      if (still) dropPlayer(r, dropId);
+    }, RECONNECT_GRACE_MS);
+    broadcast(room); // show "(reconnecting…)" to everyone
   });
 });
 
@@ -653,10 +719,11 @@ function sanitizeSettings(gameType, s) {
     : [];
   if (!leagues.length) leagues = allowed.slice();
   const era = ["current", "past", "both"].indexOf(s.era) !== -1 ? s.era : "both";
+  const difficulty = s.difficulty === "stars" ? "stars" : "all";
   let teams = parseInt(s.teams, 10);
   if (isNaN(teams)) teams = 0;
   teams = Math.max(0, Math.min(4, teams)); // 0 = solo, else 2-4 teams
-  return { leagues, era, timer, target, teams };
+  return { leagues, era, difficulty, timer, target, teams };
 }
 
 function customLetters(word) {

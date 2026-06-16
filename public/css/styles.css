@@ -427,6 +427,13 @@ input[type="text"]:focus { outline: none; border-color: var(--accent); box-shado
 .fr-chev { color: var(--accent); font-weight: 900; }
 .back.sm { padding: 7px 12px; font-size: 13px; }
 
+/* spectator + reconnect */
+.spectator-tag { text-align: center; font-weight: 800; font-size: 13px; letter-spacing: 0.5px; color: var(--accent-2);
+  background: rgba(255,194,75,0.1); border: 1px solid var(--line); border-radius: 999px; padding: 6px 0; margin-bottom: 10px; }
+.pill.dc { opacity: 0.55; border-style: dashed; }
+.dc-tag { font-size: 10px; font-weight: 700; color: var(--accent-2); opacity: 0.9; margin-left: 4px; animation: dc-blink 1.4s ease-in-out infinite; }
+@keyframes dc-blink { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+
 /* incoming game invite */
 .invite-banner {
   position: fixed; left: 50%; bottom: 18px; transform: translate(-50%, 140%);

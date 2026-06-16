@@ -39,12 +39,15 @@
     if (settings.timer == null) settings.timer = 30;
     if (settings.target == null) settings.target = 3;
     if (settings.teams == null) settings.teams = 0;
+    if (settings.difficulty == null) settings.difficulty = "all";
     if (editable === false) {
       el.innerHTML =
         '<h3>Settings</h3><p class="settings-label">Leagues: <b>' +
         esc(settings.leagues.join(", ")) +
         "</b></p><p class=\"settings-label\">Players: <b>" +
         ({ current: "Current only", past: "Past only", both: "Current + Past" }[settings.era]) +
+        "</b></p><p class=\"settings-label\">Difficulty: <b>" +
+        (settings.difficulty === "stars" ? "Stars only ⭐" : "All players") +
         "</b></p><p class=\"settings-label\">Turn timer: <b>" +
         (settings.timer ? settings.timer + " seconds" : "Off (no limit)") +
         "</b></p><p class=\"settings-label\">Match: <b>first to " +
@@ -87,6 +90,21 @@
             '">' +
             o[1] +
             "</button>"
+          );
+        })
+        .join("") +
+      "</div>" +
+      '<p class="settings-label" style="margin-top:14px">Difficulty ' +
+      '<span style="opacity:.7">(Stars = famous players only)</span></p>' +
+      '<div class="seg" data-diff>' +
+      [
+        ["all", "All players"],
+        ["stars", "⭐ Stars only"],
+      ]
+        .map(function (o) {
+          return (
+            '<button data-diff-val="' + o[0] + '" class="' +
+            (settings.difficulty === o[0] ? "on" : "") + '">' + o[1] + "</button>"
           );
         })
         .join("") +
@@ -166,6 +184,15 @@
       btn.addEventListener("click", function () {
         settings.era = btn.getAttribute("data-era-val");
         el.querySelectorAll("[data-era-val]").forEach(function (b) {
+          b.classList.toggle("on", b === btn);
+        });
+        onChange && onChange(settings);
+      });
+    });
+    el.querySelectorAll("[data-diff-val]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        settings.difficulty = btn.getAttribute("data-diff-val");
+        el.querySelectorAll("[data-diff-val]").forEach(function (b) {
           b.classList.toggle("on", b === btn);
         });
         onChange && onChange(settings);
@@ -622,10 +649,12 @@
             '<span class="pill ' +
             (p.alive ? "" : "out ") +
             (i === currentIdx && p.alive ? "current " : "") +
+            (p.disconnected ? "dc " : "") +
             (p.team != null ? "t" + p.team : "") +
             '">' +
             (p.team != null ? '<span class="team-dot"></span>' : "") +
             esc(p.name) +
+            (p.disconnected ? ' <span class="dc-tag">reconnecting…</span>' : "") +
             "</span>"
           );
         })

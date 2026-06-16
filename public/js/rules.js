@@ -149,6 +149,7 @@
   function eligible(athlete, settings) {
     if (settings.leagues && settings.leagues.indexOf(athlete.league) === -1) return false;
     if (settings.era && settings.era !== "both" && athlete.era !== settings.era) return false;
+    if (settings.difficulty === "stars" && !athlete.star) return false;
     return true;
   }
 

@@ -9,17 +9,50 @@
     room: null,
     myId: null,
     gameType: "athlete",
-    settings: { leagues: ["NBA", "MLB", "NFL", "NHL", "SOC", "CFB", "CBB"], era: "both", timer: 30, target: 3 },
+    settings: { leagues: ["NBA", "MLB", "NFL", "NHL", "SOC", "CFB", "CBB"], era: "both", difficulty: "all", timer: 30, target: 3 },
     customSettings: { category: "", letterRule: true, timer: 30, target: 3 },
     tick: null,
+    activeCode: null,
+    spectator: false,
   };
   window.NameGameOnline = O;
+
+  // Stable identity so a dropped player can reclaim their seat on reconnect.
+  O.clientId = (function () {
+    try {
+      var k = localStorage.getItem("ng-client-id");
+      if (!k) { k = "c" + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem("ng-client-id", k); }
+      return k;
+    } catch (e) { return "c" + Math.random().toString(36).slice(2); }
+  })();
+
+  function saveSession(code) {
+    O.activeCode = code;
+    try { localStorage.setItem("ng-online-session", JSON.stringify({ code: code, ts: Date.now(), spectator: !!O.spectator })); } catch (e) {}
+  }
+  function clearSession() {
+    O.activeCode = null; O.spectator = false;
+    try { localStorage.removeItem("ng-online-session"); } catch (e) {}
+  }
 
   function connect() {
     if (socket) return socket;
     socket = io(window.NG_SERVER || undefined); // remote in native shell, same-origin on web
     O.myId = null;
-    socket.on("connect", function () { O.myId = socket.id; });
+    socket.on("connect", function () {
+      O.myId = socket.id;
+      // transport reconnected mid-game → recover our seat (or spectator view)
+      if (O.activeCode) {
+        if (O.spectator) {
+          socket.emit("room:spectate", { code: O.activeCode }, function (res) { if (res && res.ok) { O.room = res.room; renderRoom(); } });
+        } else {
+          socket.emit("room:rejoin", { code: O.activeCode, clientId: O.clientId }, function (res) {
+            if (res && res.ok) { O.room = res.room; renderRoom(); }
+            else { clearSession(); }
+          });
+        }
+      }
+    });
     socket.on("room:update", function (room) {
       O.room = room;
       renderRoom();
@@ -84,11 +117,10 @@
       }
       connect().emit(
         "room:create",
-        { name: nameVal(), gameType: O.gameType, settings: O.gameType === "custom" ? O.customSettings : O.settings },
+        { name: nameVal(), gameType: O.gameType, settings: O.gameType === "custom" ? O.customSettings : O.settings, clientId: O.clientId },
         function (res) {
           if (res && res.ok) {
-            O.room = res.room;
-            enterRoom();
+            O.spectator = false; O.room = res.room; saveSession(res.code); enterRoom();
           } else err((res && res.message) || "Could not create room.");
         }
       );
@@ -97,19 +129,39 @@
       err("");
       var code = (document.getElementById("online-code").value || "").trim().toUpperCase();
       if (code.length !== 4) return err("Enter the 4-letter room code.");
-      connect().emit("room:join", { code: code, name: nameVal() }, function (res) {
+      connect().emit("room:join", { code: code, name: nameVal(), clientId: O.clientId }, function (res) {
         if (res && res.ok) {
-          O.room = res.room;
-          enterRoom();
+          O.spectator = false; O.room = res.room; saveSession(res.code); enterRoom();
+        } else if (res && res.canSpectate) {
+          offerSpectate(code, res.message || "That game has already started.");
         } else err((res && res.message) || "Could not join.");
       });
     };
     document.getElementById("online-leave").onclick = function () {
+      clearSession();
       if (socket) { socket.disconnect(); socket = null; }
       if (O.tick) clearInterval(O.tick);
       O.room = null;
       App.showScreen("online-home");
     };
+  }
+
+  // Offer to watch a game that's already underway.
+  function offerSpectate(code, msg) {
+    err(msg);
+    var e = document.getElementById("online-error");
+    if (!e) return;
+    var b = document.createElement("button");
+    b.className = "primary-btn"; b.style.marginTop = "10px";
+    b.textContent = "👁 Watch this game instead";
+    b.onclick = function () { spectate(code); };
+    e.appendChild(b);
+  }
+  function spectate(code) {
+    connect().emit("room:spectate", { code: code }, function (res) {
+      if (res && res.ok) { O.spectator = true; O.room = res.room; saveSession(code); enterRoom(); }
+      else err((res && res.message) || "Couldn’t watch that game.");
+    });
   }
 
   var C_TIMER = [[0, "Off"], [30, "30s"], [45, "45s"], [60, "60s"], [90, "90s"]];
@@ -197,10 +249,12 @@
       '<div class="code-hero"><div class="settings-label">Room code</div><div class="big-code">' + esc(room.code) + "</div></div>" +
       '<div class="invite-box"><input type="text" readonly value="' + esc(link) + '" id="invite-link" />' +
       '<button class="primary-btn copy-btn" id="copy-link">Copy</button></div></div>' +
-      '<div class="panel"><h3>Players (' + room.players.length + ")</h3>" +
+      '<div class="panel"><h3>Players (' + room.players.length + ")" +
+      (room.spectators ? ' · ' + room.spectators + ' watching 👁' : "") + "</h3>" +
       '<div class="players-strip">' +
       room.players.map(function (p) {
-        return '<span class="pill ' + (p.isHost ? "host" : "") + '">' + esc(p.name) + "</span>";
+        return '<span class="pill ' + (p.isHost ? "host " : "") + (p.disconnected ? "dc" : "") + '">' + esc(p.name) +
+          (p.disconnected ? ' <span class="dc-tag">reconnecting…</span>' : "") + "</span>";
       }).join("") +
       "</div></div>" +
       '<div class="panel" id="online-settings"></div>' +
@@ -241,9 +295,10 @@
 
   function renderGame(box, room) {
     if (room.gameType === "custom") return renderCustomGame(box, room);
-    var meTurn = room.currentPlayerId === O.myId;
+    var spec = O.spectator;
+    var meTurn = !spec && room.currentPlayerId === O.myId;
     var curPlayer = room.players.find(function (p) { return p.id === room.currentPlayerId; });
-    var players = room.players.map(function (p) { return { name: p.name, alive: p.alive, team: p.team }; });
+    var players = room.players.map(function (p) { return { name: p.name, alive: p.alive, team: p.team, disconnected: p.disconnected }; });
     var curIdx = room.players.findIndex(function (p) { return p.id === room.currentPlayerId; });
     var secs = room.settings.timer;
 
@@ -255,7 +310,9 @@
       : '<div class="no-timer">⏱ No time limit' + (meTurn ? " — tap “Stuck” if you can’t go" : "") + "</div>";
 
     var middle;
-    if (room.challenge) {
+    if (spec) {
+      middle = '<div class="no-timer">👁 You’re spectating — sit back and watch.</div>';
+    } else if (room.challenge) {
       middle = App.challengePanel(room.challenge);
     } else if (room.paused) {
       middle = '<div class="overlay-panel"><div class="op-title">⏸ Paused</div>' +
@@ -275,6 +332,7 @@
     }
 
     box.innerHTML =
+      (spec ? '<div class="spectator-tag">👁 Spectating</div>' : "") +
       App.roundTag(room.round, scoreRows(room), room.settings.target) +
       App.strip(players, curIdx) +
       '<div class="turn-card">' +
@@ -287,7 +345,9 @@
       "</div>" +
       App.historyHtml(room.history);
 
-    if (room.challenge) {
+    if (spec) {
+      if (secs > 0) startTimer(room.deadlineTs); // spectators still see the clock
+    } else if (room.challenge) {
       App.wireChallenge("online-room", function (decision) {
         socket.emit("game:resolve", { decision: decision });
       });
@@ -477,7 +537,22 @@
     O.tick = setInterval(paint, 250);
   }
 
+  // After a refresh or crash, silently pull the player back into their game.
+  function recoverSession() {
+    var s;
+    try { s = JSON.parse(localStorage.getItem("ng-online-session") || "null"); } catch (e) { s = null; }
+    if (!s || !s.code || Date.now() - s.ts > 5 * 60 * 1000) return;
+    O.spectator = !!s.spectator;
+    var ev = s.spectator ? "room:spectate" : "room:rejoin";
+    var payload = s.spectator ? { code: s.code } : { code: s.code, clientId: O.clientId };
+    connect().emit(ev, payload, function (res) {
+      if (res && res.ok) { O.activeCode = s.code; O.room = res.room; enterRoom(); }
+      else clearSession();
+    });
+  }
+
+  function init() { wire(); recoverSession(); }
   if (document.readyState === "loading")
-    document.addEventListener("DOMContentLoaded", wire);
-  else wire();
+    document.addEventListener("DOMContentLoaded", init);
+  else init();
 })();
